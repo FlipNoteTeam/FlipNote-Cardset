@@ -1,0 +1,87 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+# This workflow will build a Node.js NestJS project and cache/restore any dependencies to improve the workflow execution time
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs-with-npm
+
+name: Node CI with NestJS
+
+on:
+  push:
+    branches:
+      - "develop"
+      - "develop/**"
+  pull_request:
+    branches:
+      - "develop"
+      - "develop/**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    # env:
+    #   S3_ACCESS_KEY: ${{ secrets.S3_ACCESS_KEY }}
+    #   S3_SECRET_KEY: ${{ secrets.S3_SECRET_KEY }}
+    #   S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
+    #   S3_BUCKET_REGION: ${{ secrets.S3_BUCKET_REGION }}
+
+    # services:
+    #   redis:
+    #     image: redis:7.0-alpine
+    #     ports:
+    #       - 6379:6379
+    #     options: >-
+    #       --health-cmd "redis-cli ping"
+    #       --health-interval 10s
+    #       --health-timeout 5s
+    #       --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 22.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Run tests
+        run: npm test
+
+      - name: Run e2e tests
+        run: npm run test:e2e
+
+      - name: Test coverage
+        run: npm run test:cov
+
+      # 빌드 성공 메시지
+      - name: Notify Slack on Success
+        if: success()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          fields: repo,message,commit,author,job,took
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      # 빌드 실패 메시지
+      - name: Notify Slack on Failure
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          fields: repo,message,commit,author,job,took
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
