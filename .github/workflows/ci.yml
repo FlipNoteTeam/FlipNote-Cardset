@@ -33,6 +33,19 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+          
+      mysql:
+        image: mysql:8.0
+        ports:
+          - 3306:3306
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MYSQL_DATABASE: ${{ secrets.DB_DATABASE }}
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -p${{ secrets.DB_PASSWORD }}"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
     steps:
       - uses: actions/checkout@v4
@@ -49,7 +62,13 @@ jobs:
           echo "DB_USERNAME=${{ secrets.DB_USERNAME }}" >> .env
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
           echo "DB_DATABASE=${{ secrets.DB_DATABASE }}" >> .env
-          
+          echo "REDIS_HOST=${{ secrets.REDIS_HOST }}" >> .env
+          echo "REDIS_PORT=${{ secrets.REDIS_PORT }}" >> .env
+      - name: Test MySQL Connection
+        run: |
+          sudo apt-get update && sudo apt-get install -y mysql-client
+          mysql -h ${{ secrets.DB_HOST }} -P ${{ secrets.DB_PORT }} -u${{ secrets.DB_USERNAME }} -p${{ secrets.DB_PASSWORD }} -e "SHOW DATABASES;"
+
       - name: Install dependencies
         run: npm ci
 
