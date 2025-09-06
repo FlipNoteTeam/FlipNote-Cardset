@@ -5,7 +5,7 @@ on:
     branches: [develop]
 
 env:
-  DOCKER_REPO: ${{ secrets.DOCKERHUB_USERNAME }}/flipnote-nodejs
+  DOCKER_REPO: ${{ secrets.DOCKERHUB_USERNAME }}/flipnote-nestjs
 
 jobs:
   deploy:
@@ -46,7 +46,7 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             export IMAGE_TAG=${{ steps.meta.outputs.version }}
-            bash ~/deploy-nodejs/deploy-flipnote.sh
+            bash ~/deploy-nestjs/deploy-flipnote.sh
 
       - name: Notify Slack on Success
         if: success()
