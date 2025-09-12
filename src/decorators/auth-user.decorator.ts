@@ -3,7 +3,7 @@ import { UserAuth } from '../types/userAuth.type';
 
 export const AuthUser = createParamDecorator<UserAuth>(
   (data: unknown, ctx: ExecutionContext): UserAuth => {
-    const request = ctx.switchToHttp().getRequest();
+    const request = ctx.switchToHttp().getRequest<Request>();
     return request.user;
   },
 );
