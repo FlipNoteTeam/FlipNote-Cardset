@@ -1,5 +1,11 @@
 import { Cardset } from '../../cardset/entities/cardset.entity';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn, JoinColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  JoinColumn,
+} from 'typeorm';
 
 @Entity('card')
 export class Card {
