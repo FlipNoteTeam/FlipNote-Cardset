@@ -2,7 +2,12 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
-
+import { CardsetModule } from './cardset/cardset.module';
+import { CardsetManagerModule } from './cardset-manager/cardset-manager.module';
+import { Cardset as CardSet } from './cardset/entities/cardset.entity';
+import { CardsetManager as CardSetManager } from './cardset-manager/entities/cardset-manager.entity';
+import { CardModule } from './card/card.module';
+import { Card as Card } from './card/entities/card.entity';
 @Module({
   imports: [
     AuthModule,
@@ -14,9 +19,12 @@ import { AuthModule } from './auth/auth.module';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_DATABASE,
-      entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: process.env.NODE_ENnestV !== 'production',
+      entities: [CardSet, CardSetManager, Card],
+      synchronize: false,
     }),
+    CardsetModule,
+    CardsetManagerModule,
+    CardModule,
   ],
   controllers: [],
   providers: [],
