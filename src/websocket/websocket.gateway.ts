@@ -16,6 +16,8 @@ import * as Y from 'yjs';
     origin: '*',
   },
   namespace: '/cardsets',
+  pingTimeout: 60000, // 60초
+  pingInterval: 25000, // 25초
 })
 export class CollaborationGateway
   implements OnGatewayConnection, OnGatewayDisconnect
@@ -24,17 +26,13 @@ export class CollaborationGateway
   server: Server;
 
   private readonly logger = new Logger(CollaborationGateway.name);
-  private readonly heartbeatInterval = 10000; // 10초
-  private heartbeatTimers = new Map<string, NodeJS.Timeout>();
   private documentMap = new Map<string, Y.Doc>(); // documentId -> Y.Doc
 
   constructor() {}
 
   handleConnection(client: Socket) {
     this.logger.log(`Client connected: ${client.id}`);
-
-    // 10초마다 헬스체크 시작
-    this.startHeartbeat(client);
+    // Socket.IO의 내장 PING/PONG 하트비트가 자동으로 처리됩니다
   }
 
   handleDisconnect(client: Socket) {
@@ -42,8 +40,7 @@ export class CollaborationGateway
     this.logger.log(
       `Disconnect reason: ${client.disconnected ? 'Client initiated' : 'Server initiated'}`,
     );
-
-    this.stopHeartbeat(client.id);
+    // Socket.IO의 내장 하트비트가 자동으로 연결 상태를 관리합니다
   }
 
   @SubscribeMessage('joinRoom')
@@ -328,44 +325,6 @@ export class CollaborationGateway
         clientId: client.id,
         timestamp: new Date().toISOString(),
       });
-    }
-  }
-
-  @SubscribeMessage('heartbeat')
-  handleHeartbeat(@ConnectedSocket() client: Socket) {
-    // 클라이언트로부터 heartbeat 응답 받음
-    this.logger.log(`Received heartbeat from client ${client.id}`);
-    client.emit('heartbeat-ack', {
-      clientId: client.id,
-      timestamp: new Date().toISOString(),
-    });
-  }
-
-  private startHeartbeat(client: Socket) {
-    const timer = setInterval(() => {
-      // 클라이언트가 연결되어 있는지 확인
-      if (!client.connected) {
-        this.logger.warn(
-          `Client ${client.id} is not connected, stopping heartbeat`,
-        );
-        this.stopHeartbeat(client.id);
-        return;
-      }
-
-      // 클라이언트에게 heartbeat 전송
-      client.emit('heartbeat', {
-        timestamp: new Date().toISOString(),
-      });
-    }, this.heartbeatInterval);
-
-    this.heartbeatTimers.set(client.id, timer);
-  }
-
-  private stopHeartbeat(clientId: string) {
-    const timer = this.heartbeatTimers.get(clientId);
-    if (timer) {
-      clearInterval(timer);
-      this.heartbeatTimers.delete(clientId);
     }
   }
 }
