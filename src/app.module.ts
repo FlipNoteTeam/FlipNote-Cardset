@@ -8,6 +8,7 @@ import { Cardset as CardSet } from './cardset/entities/cardset.entity';
 import { CardsetManager as CardSetManager } from './cardset-manager/entities/cardset-manager.entity';
 import { CardModule } from './card/card.module';
 import { Card as Card } from './card/entities/card.entity';
+import { WebSocketModule } from './websocket/websocket.module';
 @Module({
   imports: [
     AuthModule,
@@ -25,6 +26,7 @@ import { Card as Card } from './card/entities/card.entity';
     CardsetModule,
     CardsetManagerModule,
     CardModule,
+    WebSocketModule,
   ],
   controllers: [],
   providers: [],
