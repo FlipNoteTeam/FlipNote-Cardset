@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Socket.IO + YJS 테스트</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://unpkg.com/yjs@13.6.10/dist/yjs.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .connected { background-color: #d4edda; color: #155724; }
+        .disconnected { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .connect { background-color: #28a745; color: white; }
+        .disconnect { background-color: #dc3545; color: white; }
+        .join { background-color: #007bff; color: white; }
+        .leave { background-color: #6c757d; color: white; }
+        #log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Socket.IO + YJS 테스트 클라이언트</h1>
+    
+    <div id="status" class="status disconnected">연결되지 않음</div>
+    
+    <div>
+        <button id="connectBtn" class="connect">연결</button>
+        <button id="disconnectBtn" class="disconnect" disabled>연결 해제</button>
+    </div>
+    
+    <div>
+        <input type="text" id="documentId" placeholder="문서 ID" value="test-document-1" style="padding: 8px; margin: 5px;">
+        <button id="joinBtn" class="join" disabled>문서 참여</button>
+        <button id="leaveBtn" class="leave" disabled>문서 나가기</button>
+    </div>
+    
+    <div>
+        <input type="text" id="userId" placeholder="사용자 ID" value="user-1" style="padding: 8px; margin: 5px;">
+    </div>
+    
+    <div>
+        <h3>로그:</h3>
+        <div id="log"></div>
+    </div>
+
+    <script>
+        let socket = null;
+        let isConnected = false;
+        let currentDocumentId = null;
+        let ydoc = null;
+
+        const statusDiv = document.getElementById('status');
+        const logDiv = document.getElementById('log');
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const joinBtn = document.getElementById('joinBtn');
+        const leaveBtn = document.getElementById('leaveBtn');
+        const documentIdInput = document.getElementById('documentId');
+        const userIdInput = document.getElementById('userId');
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${timestamp}] ${message}<br>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateStatus(connected) {
+            isConnected = connected;
+            if (connected) {
+                statusDiv.textContent = '연결됨';
+                statusDiv.className = 'status connected';
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                joinBtn.disabled = false;
+            } else {
+                statusDiv.textContent = '연결되지 않음';
+                statusDiv.className = 'status disconnected';
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                joinBtn.disabled = true;
+                leaveBtn.disabled = true;
+            }
+        }
+
+        function updateDocumentStatus(joined) {
+            if (joined) {
+                joinBtn.disabled = true;
+                leaveBtn.disabled = false;
+            } else {
+                joinBtn.disabled = false;
+                leaveBtn.disabled = true;
+            }
+        }
+
+        connectBtn.addEventListener('click', () => {
+            if (socket) {
+                socket.disconnect();
+            }
+            
+            socket = io('http://localhost:3000/collaboration', {
+                transports: ['websocket'],
+                autoConnect: true,
+                reconnection: true,
+                reconnectionDelay: 1000,
+                reconnectionAttempts: 5,
+                timeout: 20000
+            });
+
+            socket.on('connect', () => {
+                log('서버에 연결됨');
+                updateStatus(true);
+            });
+
+            socket.on('disconnect', () => {
+                log('서버 연결 해제됨');
+                updateStatus(false);
+                updateDocumentStatus(false);
+            });
+
+            socket.on('reconnect', (attemptNumber) => {
+                log(`서버 재연결 성공 (시도 횟수: ${attemptNumber})`);
+                updateStatus(true);
+            });
+
+            socket.on('reconnect_attempt', (attemptNumber) => {
+                log(`서버 재연결 시도 중... (${attemptNumber}/5)`);
+            });
+
+            socket.on('reconnect_error', (error) => {
+                log(`재연결 실패: ${error.message}`);
+            });
+
+            socket.on('reconnect_failed', () => {
+                log('재연결 최대 시도 횟수 초과');
+                updateStatus(false);
+            });
+
+            socket.on('connected', (data) => {
+                log(`서버 연결 확인: ${JSON.stringify(data)}`);
+            });
+
+            socket.on('document-joined', (data) => {
+                log(`문서 참여 성공: ${JSON.stringify(data)}`);
+                currentDocumentId = data.documentId;
+                updateDocumentStatus(true);
+            });
+
+            socket.on('document-left', (data) => {
+                log(`문서 나가기 성공: ${JSON.stringify(data)}`);
+                currentDocumentId = null;
+                updateDocumentStatus(false);
+            });
+
+            socket.on('user-joined', (data) => {
+                log(`다른 사용자 참여: ${JSON.stringify(data)}`);
+            });
+
+            socket.on('user-left', (data) => {
+                log(`다른 사용자 나감: ${JSON.stringify(data)}`);
+            });
+
+            socket.on('yjs-update', (data) => {
+                log(`YJS 업데이트 수신: ${JSON.stringify(data)}`);
+                // 여기서 YJS 문서에 업데이트 적용
+            });
+
+            socket.on('heartbeat', (data) => {
+                log(`Heartbeat 수신: ${JSON.stringify(data)}`);
+                // 자동으로 heartbeat 응답 (약간의 지연을 두어 안정성 확보)
+                setTimeout(() => {
+                    if (socket && socket.connected) {
+                        socket.emit('heartbeat');
+                    }
+                }, 100);
+            });
+
+            socket.on('heartbeat-ack', (data) => {
+                log(`Heartbeat 응답: ${JSON.stringify(data)}`);
+            });
+
+            socket.on('error', (data) => {
+                log(`에러: ${JSON.stringify(data)}`);
+            });
+        });
+
+        disconnectBtn.addEventListener('click', () => {
+            if (socket) {
+                socket.disconnect();
+                socket = null;
+            }
+        });
+
+        joinBtn.addEventListener('click', () => {
+            const documentId = documentIdInput.value;
+            const userId = userIdInput.value;
+            
+            if (socket && isConnected) {
+                log(`문서 참여 요청: ${documentId}`);
+                socket.emit('join-document', { documentId, userId });
+            }
+        });
+
+        leaveBtn.addEventListener('click', () => {
+            if (socket && isConnected && currentDocumentId) {
+                log(`문서 나가기 요청: ${currentDocumentId}`);
+                socket.emit('leave-document', { documentId: currentDocumentId });
+            }
+        });
+
+        // 페이지 로드 시 초기 상태 설정
+        updateStatus(false);
+        updateDocumentStatus(false);
+    </script>
+</body>
+</html>
