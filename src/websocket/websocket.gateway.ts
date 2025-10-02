@@ -39,7 +39,9 @@ export class CollaborationGateway
 
   handleDisconnect(client: Socket) {
     this.logger.log(`Client disconnected: ${client.id}`);
-    this.logger.log(`Disconnect reason: ${client.disconnected ? 'Client initiated' : 'Server initiated'}`);
+    this.logger.log(
+      `Disconnect reason: ${client.disconnected ? 'Client initiated' : 'Server initiated'}`,
+    );
 
     this.stopHeartbeat(client.id);
   }
@@ -55,7 +57,7 @@ export class CollaborationGateway
       );
 
       // 클라이언트를 룸에 조인
-      client.join(data.documentId);
+      void client.join(data.documentId);
 
       // Yjs 문서 초기화 또는 가져오기
       let doc = this.documentMap.get(data.documentId);
@@ -85,7 +87,9 @@ export class CollaborationGateway
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      this.logger.error(`Error joining document: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      this.logger.error(
+        `Error joining document: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
       client.emit('error', { message: 'Failed to join document' });
     }
   }
@@ -103,7 +107,7 @@ export class CollaborationGateway
       // YJS 서비스 제거로 인한 간단한 처리
 
       // 룸에서 나가기
-      client.leave(data.documentId);
+      void client.leave(data.documentId);
 
       // 나가기 성공 응답
       client.emit('userLeft', {
@@ -118,7 +122,9 @@ export class CollaborationGateway
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      this.logger.error(`Error leaving document: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      this.logger.error(
+        `Error leaving document: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
       client.emit('error', { message: 'Failed to leave document' });
     }
   }
@@ -129,8 +135,10 @@ export class CollaborationGateway
     @MessageBody() data: { documentId: string; field: string; content: string },
   ) {
     try {
-      this.logger.log(`Received text update from client ${client.id} for document ${data.documentId} (${data.field})`);
-      
+      this.logger.log(
+        `Received text update from client ${client.id} for document ${data.documentId} (${data.field})`,
+      );
+
       // 텍스트 업데이트를 다른 클라이언트들에게 브로드캐스트
       client.to(data.documentId).emit('text-update', {
         documentId: data.documentId,
@@ -140,7 +148,9 @@ export class CollaborationGateway
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      this.logger.error(`Error broadcasting text update: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      this.logger.error(
+        `Error broadcasting text update: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
@@ -150,27 +160,38 @@ export class CollaborationGateway
     @MessageBody() data: { documentId?: string; type: string; data: any },
   ) {
     try {
-      this.logger.log(`Received yjs-message from client ${client.id}: ${JSON.stringify(data)}`);
-      
-      const { documentId, type, data: messageData } = data;
-      
+      this.logger.log(
+        `Received yjs-message from client ${client.id}: ${JSON.stringify(data)}`,
+      );
+
+      const {
+        documentId,
+        type,
+        data: messageData,
+      } = data as { documentId?: string; type: string; data: unknown };
+
       // auth 메시지 처리
       if (type === 'auth') {
-        this.handleAuth(client, messageData);
+        this.handleAuth(
+          client,
+          messageData as { token: string; userId: string; documentId: string },
+        );
         return;
       }
-      
+
       // documentId가 없으면 에러
       if (!documentId) {
         this.logger.warn(`Document ID required for client ${client.id}`);
         client.emit('error', { message: 'Document ID required' });
         return;
       }
-      
+
       const doc = this.documentMap.get(documentId);
-      
+
       if (!doc) {
-        this.logger.warn(`Document not found: ${documentId} for client ${client.id}`);
+        this.logger.warn(
+          `Document not found: ${documentId} for client ${client.id}`,
+        );
         client.emit('error', { message: 'Document not found' });
         return;
       }
@@ -186,82 +207,118 @@ export class CollaborationGateway
           this.handleAwarenessMessage(client, doc, documentId, messageData);
           break;
         default:
-          this.logger.warn(`Unknown message type: ${type} from client ${client.id}`);
+          this.logger.warn(
+            `Unknown message type: ${type} from client ${client.id}`,
+          );
       }
     } catch (error) {
-      this.logger.error(`Error processing YJS message from client ${client.id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      this.logger.error(
+        `Error processing YJS message from client ${client.id}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
       this.logger.error(`Raw data: ${JSON.stringify(data)}`);
     }
   }
 
-  private handleSyncMessage(client: Socket, doc: Y.Doc, documentId: string, data: any) {
-    const { syncStep, update } = data;
+  private handleSyncMessage(
+    client: Socket,
+    doc: Y.Doc,
+    documentId: string,
+    data: any,
+  ) {
+    const { syncStep, update } = data as {
+      syncStep: number;
+      update?: number[];
+    };
 
     if (syncStep === 0) {
       // Step 0: 클라이언트가 현재 상태 벡터 전송
       const stateVector = Y.encodeStateVector(doc);
       client.emit('yjs-message', {
         type: 'sync',
-        data: { syncStep: 1, update: Array.from(stateVector) }
+        data: { syncStep: 1, update: Array.from(stateVector) },
       });
     } else if (syncStep === 1 && update) {
       // Step 1: 서버가 차이점 전송
-      const diff = Y.encodeStateAsUpdate(doc, new Uint8Array(update));
+      const diff = Y.encodeStateAsUpdate(
+        doc,
+        new Uint8Array(update as unknown as ArrayBufferLike),
+      );
       client.emit('yjs-message', {
         type: 'sync',
-        data: { syncStep: 1, update: Array.from(diff) }
+        data: { syncStep: 1, update: Array.from(diff) },
       });
     }
   }
 
-  private handleUpdateMessage(client: Socket, doc: Y.Doc, documentId: string, data: any) {
-    const { update } = data;
-    Y.applyUpdate(doc, new Uint8Array(update));
-    
+  private handleUpdateMessage(
+    client: Socket,
+    doc: Y.Doc,
+    documentId: string,
+    data: any,
+  ) {
+    const { update } = data as { update: number[] };
+    Y.applyUpdate(doc, new Uint8Array(update as unknown as ArrayBufferLike));
+
     // 다른 클라이언트들에게 업데이트 브로드캐스트
     client.to(documentId).emit('yjs-message', {
       type: 'update',
-      data: { update: Array.from(update) }
+      data: { update: Array.from(update) },
     });
   }
 
-  private handleAwarenessMessage(client: Socket, doc: Y.Doc, documentId: string, data: any) {
-    const { awareness } = data;
-    
+  private handleAwarenessMessage(
+    client: Socket,
+    doc: Y.Doc,
+    documentId: string,
+    data: any,
+  ) {
+    const { awareness } = data as { awareness: number[] };
+
     // 다른 클라이언트들에게 awareness 브로드캐스트
     client.to(documentId).emit('yjs-message', {
       type: 'awareness',
-      data: { awareness: Array.from(awareness) }
+      data: { awareness: Array.from(awareness) },
     });
   }
 
-  private handleAuth(client: Socket, data: { token: string; userId: string; documentId: string }) {
+  private handleAuth(
+    client: Socket,
+    data: { token: string; userId: string; documentId: string },
+  ) {
     try {
-      this.logger.log(`Received auth from client ${client.id}, userId: ${data.userId}, documentId: ${data.documentId}`);
+      this.logger.log(
+        `Received auth from client ${client.id}, userId: ${data.userId}, documentId: ${data.documentId}`,
+      );
       this.logger.log(`Auth data: ${JSON.stringify(data)}`);
-      
+
       // TODO: 실제 JWT 토큰 검증 로직 구현
       // 임시로 토큰이 있으면 인증 성공으로 처리
       const hasAccess = true;
-      
+
       const accessControlMessage = {
         data: {
           hasAccess,
-          message: hasAccess ? 'Authentication successful' : 'Authentication failed',
+          message: hasAccess
+            ? 'Authentication successful'
+            : 'Authentication failed',
         },
         clientId: client.id,
         timestamp: new Date().toISOString(),
       };
-      
-      this.logger.log(`Sending access-control to client ${client.id}: ${JSON.stringify(accessControlMessage)}`);
+
+      this.logger.log(
+        `Sending access-control to client ${client.id}: ${JSON.stringify(accessControlMessage)}`,
+      );
       client.emit('access-control', accessControlMessage);
-      
+
       // 클라이언트가 이벤트를 받을 시간을 주기 위해 약간의 지연
       setTimeout(() => {
         this.logger.log(`Auth result for client ${client.id}: ${hasAccess}`);
       }, 100);
     } catch (error) {
-      this.logger.error(`Auth error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      this.logger.error(
+        `Auth error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
       this.logger.error(`Auth data: ${JSON.stringify(data)}`);
       client.emit('access-control', {
         data: {
@@ -288,7 +345,9 @@ export class CollaborationGateway
     const timer = setInterval(() => {
       // 클라이언트가 연결되어 있는지 확인
       if (!client.connected) {
-        this.logger.warn(`Client ${client.id} is not connected, stopping heartbeat`);
+        this.logger.warn(
+          `Client ${client.id} is not connected, stopping heartbeat`,
+        );
         this.stopHeartbeat(client.id);
         return;
       }
