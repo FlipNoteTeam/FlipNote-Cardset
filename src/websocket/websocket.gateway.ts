@@ -256,9 +256,9 @@ export class CollaborationGateway
     const { update } = data as { update: number[] };
     Y.applyUpdate(doc, new Uint8Array(update as unknown as ArrayBufferLike));
 
-    // 다른 클라이언트들에게 업데이트 브로드캐스트
+    // 다른 클라이언트들에게 sync 메시지로 브로드캐스트
     client.to(documentId).emit('yjs-message', {
-      type: 'update',
+      type: 'sync',
       data: { update: Array.from(update) },
     });
   }
