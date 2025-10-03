@@ -40,6 +40,115 @@ export class CollaborationGateway
     this.logger.log(
       `Disconnect reason: ${client.disconnected ? 'Client initiated' : 'Server initiated'}`,
     );
+    // Socket.IO의 내장 하트비트가 자동으로 연결 상태를 관리합니다
+  }
+
+  @SubscribeMessage('joinRoom')
+  handleJoinDocument(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { documentId: string; userId?: string },
+  ) {
+    try {
+      this.logger.log(
+        `Client ${client.id} joining document: ${data.documentId}`,
+      );
+
+      // 클라이언트를 룸에 조인
+      void client.join(data.documentId);
+
+      // Yjs 문서 초기화 또는 가져오기
+      let doc = this.documentMap.get(data.documentId);
+      if (!doc) {
+        doc = new Y.Doc();
+        this.documentMap.set(data.documentId, doc);
+      }
+
+      // 클라이언트에게 현재 문서 상태 전송
+      const state = Y.encodeStateAsUpdate(doc);
+      client.emit('sync', {
+        documentId: data.documentId,
+        update: Array.from(state),
+      });
+
+      // 조인 성공 응답
+      client.emit('joinRoom', {
+        documentId: data.documentId,
+        clientId: client.id,
+        timestamp: new Date().toISOString(),
+      });
+
+      // 다른 클라이언트들에게 새 클라이언트 알림
+      client.to(data.documentId).emit('user-joined', {
+        clientId: client.id,
+        userId: data.userId,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      this.logger.error(
+        `Error joining document: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+      client.emit('error', { message: 'Failed to join document' });
+    }
+  }
+
+  @SubscribeMessage('leaveRoom')
+  handleLeaveDocument(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { documentId: string },
+  ) {
+    try {
+      this.logger.log(
+        `Client ${client.id} leaving document: ${data.documentId}`,
+      );
+
+      // YJS 서비스 제거로 인한 간단한 처리
+
+      // 룸에서 나가기
+      void client.leave(data.documentId);
+
+      // 나가기 성공 응답
+      client.emit('userLeft', {
+        documentId: data.documentId,
+        clientId: client.id,
+        timestamp: new Date().toISOString(),
+      });
+
+      // 다른 클라이언트들에게 클라이언트 나감 알림
+      client.to(data.documentId).emit('userLeft', {
+        clientId: client.id,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      this.logger.error(
+        `Error leaving document: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+      client.emit('error', { message: 'Failed to leave document' });
+    }
+  }
+
+  @SubscribeMessage('sendMessage')
+  handleTextUpdate(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { documentId: string; field: string; content: string },
+  ) {
+    try {
+      this.logger.log(
+        `Received text update from client ${client.id} for document ${data.documentId} (${data.field})`,
+      );
+
+      // 텍스트 업데이트를 다른 클라이언트들에게 브로드캐스트
+      client.to(data.documentId).emit('text-update', {
+        documentId: data.documentId,
+        field: data.field,
+        content: data.content,
+        fromClientId: client.id,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      this.logger.error(
+        `Error broadcasting text update: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
   }
 
   @SubscribeMessage('sync')
@@ -52,15 +161,14 @@ export class CollaborationGateway
         `Received sync from client ${client.id} for document ${data.documentId}`,
       );
 
-      // 클라이언트를 룸에 조인
-      void client.join(data.documentId);
+      const doc = this.documentMap.get(data.documentId);
 
-      // Yjs 문서 초기화 또는 가져오기
-      let doc = this.documentMap.get(data.documentId);
       if (!doc) {
-        doc = new Y.Doc();
-        this.documentMap.set(data.documentId, doc);
-        this.logger.log(`Created new document: ${data.documentId}`);
+        this.logger.warn(
+          `Document not found: ${data.documentId} for client ${client.id}`,
+        );
+        client.emit('error', { message: 'Document not found' });
+        return;
       }
 
       this.handleSyncMessage(client, doc, data.documentId, data);
@@ -81,15 +189,14 @@ export class CollaborationGateway
         `Received update from client ${client.id} for document ${data.documentId}`,
       );
 
-      // 클라이언트를 룸에 조인
-      void client.join(data.documentId);
+      const doc = this.documentMap.get(data.documentId);
 
-      // Yjs 문서 초기화 또는 가져오기
-      let doc = this.documentMap.get(data.documentId);
       if (!doc) {
-        doc = new Y.Doc();
-        this.documentMap.set(data.documentId, doc);
-        this.logger.log(`Created new document: ${data.documentId}`);
+        this.logger.warn(
+          `Document not found: ${data.documentId} for client ${client.id}`,
+        );
+        client.emit('error', { message: 'Document not found' });
+        return;
       }
 
       this.handleUpdateMessage(client, doc, data.documentId, data);
@@ -110,15 +217,14 @@ export class CollaborationGateway
         `Received awareness from client ${client.id} for document ${data.documentId}`,
       );
 
-      // 클라이언트를 룸에 조인
-      void client.join(data.documentId);
+      const doc = this.documentMap.get(data.documentId);
 
-      // Yjs 문서 초기화 또는 가져오기
-      let doc = this.documentMap.get(data.documentId);
       if (!doc) {
-        doc = new Y.Doc();
-        this.documentMap.set(data.documentId, doc);
-        this.logger.log(`Created new document: ${data.documentId}`);
+        this.logger.warn(
+          `Document not found: ${data.documentId} for client ${client.id}`,
+        );
+        client.emit('error', { message: 'Document not found' });
+        return;
       }
 
       this.handleAwarenessMessage(client, doc, data.documentId, data);
@@ -158,16 +264,9 @@ export class CollaborationGateway
       update?: number[];
     };
 
-    this.logger.log(
-      `[SYNC] Document: ${documentId}, Client: ${client.id}, Step: ${syncStep}, Update length: ${update?.length || 0}`,
-    );
-
     if (syncStep === 0) {
       // Step 0: 클라이언트가 현재 상태 벡터 전송
       const stateVector = Y.encodeStateVector(doc);
-      this.logger.log(
-        `[SYNC] Sending state vector to client ${client.id}, length: ${stateVector.length}`,
-      );
       client.emit('sync', {
         syncStep: 1,
         update: Array.from(stateVector),
@@ -177,9 +276,6 @@ export class CollaborationGateway
       const diff = Y.encodeStateAsUpdate(
         doc,
         new Uint8Array(update as unknown as ArrayBufferLike),
-      );
-      this.logger.log(
-        `[SYNC] Sending diff to client ${client.id}, diff length: ${diff.length}`,
       );
       client.emit('sync', {
         syncStep: 1,
@@ -195,19 +291,9 @@ export class CollaborationGateway
     data: any,
   ) {
     const { update } = data as { update: number[] };
-    
-    this.logger.log(
-      `[UPDATE] Document: ${documentId}, Client: ${client.id}, Update length: ${update.length}`,
-    );
-    
     Y.applyUpdate(doc, new Uint8Array(update as unknown as ArrayBufferLike));
 
     // 다른 클라이언트들에게 sync 메시지로 브로드캐스트
-    const roomClients = this.server.sockets.adapter.rooms.get(documentId);
-    this.logger.log(
-      `[UPDATE] Broadcasting to ${roomClients?.size || 0} clients in room ${documentId}`,
-    );
-    
     client.to(documentId).emit('sync', {
       syncStep: 1,
       update: Array.from(update),
@@ -222,16 +308,7 @@ export class CollaborationGateway
   ) {
     const { awareness } = data as { awareness: number[] };
 
-    this.logger.log(
-      `[AWARENESS] Document: ${documentId}, Client: ${client.id}, Awareness length: ${awareness.length}`,
-    );
-
     // 다른 클라이언트들에게 awareness 브로드캐스트
-    const roomClients = this.server.sockets.adapter.rooms.get(documentId);
-    this.logger.log(
-      `[AWARENESS] Broadcasting to ${roomClients?.size || 0} clients in room ${documentId}`,
-    );
-    
     client.to(documentId).emit('awareness', {
       awareness: Array.from(awareness),
     });
