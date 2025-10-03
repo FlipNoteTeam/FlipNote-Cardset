@@ -65,7 +65,7 @@ export class CollaborationGateway
 
       // 클라이언트에게 현재 문서 상태 전송
       const state = Y.encodeStateAsUpdate(doc);
-      client.emit('yjs-update', {
+      client.emit('sync', {
         documentId: data.documentId,
         update: Array.from(state),
       });
@@ -151,68 +151,105 @@ export class CollaborationGateway
     }
   }
 
-  @SubscribeMessage('yjs-message')
-  handleYjsMessage(
+  @SubscribeMessage('sync')
+  handleSync(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { documentId?: string; type: string; data: any },
+    @MessageBody() data: { documentId: string; syncStep: number; update?: number[] },
   ) {
     try {
       this.logger.log(
-        `Received yjs-message from client ${client.id}: ${JSON.stringify(data)}`,
+        `Received sync from client ${client.id} for document ${data.documentId}`,
       );
 
-      const {
-        documentId,
-        type,
-        data: messageData,
-      } = data as { documentId?: string; type: string; data: unknown };
-
-      // auth 메시지 처리
-      if (type === 'auth') {
-        this.handleAuth(
-          client,
-          messageData as { token: string; userId: string; documentId: string },
-        );
-        return;
-      }
-
-      // documentId가 없으면 에러
-      if (!documentId) {
-        this.logger.warn(`Document ID required for client ${client.id}`);
-        client.emit('error', { message: 'Document ID required' });
-        return;
-      }
-
-      const doc = this.documentMap.get(documentId);
+      const doc = this.documentMap.get(data.documentId);
 
       if (!doc) {
         this.logger.warn(
-          `Document not found: ${documentId} for client ${client.id}`,
+          `Document not found: ${data.documentId} for client ${client.id}`,
         );
         client.emit('error', { message: 'Document not found' });
         return;
       }
 
-      switch (type) {
-        case 'sync':
-          this.handleSyncMessage(client, doc, documentId, messageData);
-          break;
-        case 'update':
-          this.handleUpdateMessage(client, doc, documentId, messageData);
-          break;
-        case 'awareness':
-          this.handleAwarenessMessage(client, doc, documentId, messageData);
-          break;
-        default:
-          this.logger.warn(
-            `Unknown message type: ${type} from client ${client.id}`,
-          );
-      }
+      this.handleSyncMessage(client, doc, data.documentId, data);
     } catch (error) {
       this.logger.error(
-        `Error processing YJS message from client ${client.id}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `Error processing sync from client ${client.id}: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
-      this.logger.error(`Raw data: ${JSON.stringify(data)}`);
+    }
+  }
+
+  @SubscribeMessage('update')
+  handleUpdate(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { documentId: string; update: number[] },
+  ) {
+    try {
+      this.logger.log(
+        `Received update from client ${client.id} for document ${data.documentId}`,
+      );
+
+      const doc = this.documentMap.get(data.documentId);
+
+      if (!doc) {
+        this.logger.warn(
+          `Document not found: ${data.documentId} for client ${client.id}`,
+        );
+        client.emit('error', { message: 'Document not found' });
+        return;
+      }
+
+      this.handleUpdateMessage(client, doc, data.documentId, data);
+    } catch (error) {
+      this.logger.error(
+        `Error processing update from client ${client.id}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
+  }
+
+  @SubscribeMessage('awareness')
+  handleAwareness(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { documentId: string; awareness: number[] },
+  ) {
+    try {
+      this.logger.log(
+        `Received awareness from client ${client.id} for document ${data.documentId}`,
+      );
+
+      const doc = this.documentMap.get(data.documentId);
+
+      if (!doc) {
+        this.logger.warn(
+          `Document not found: ${data.documentId} for client ${client.id}`,
+        );
+        client.emit('error', { message: 'Document not found' });
+        return;
+      }
+
+      this.handleAwarenessMessage(client, doc, data.documentId, data);
+    } catch (error) {
+      this.logger.error(
+        `Error processing awareness from client ${client.id}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
+  }
+
+  @SubscribeMessage('auth')
+  handleAuthMessage(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { token: string; userId: string; documentId: string },
+  ) {
+    try {
+      this.logger.log(
+        `Received auth from client ${client.id}, userId: ${data.userId}, documentId: ${data.documentId}`,
+      );
+
+      this.handleAuth(client, data);
+    } catch (error) {
+      this.logger.error(
+        `Error processing auth from client ${client.id}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
@@ -230,9 +267,9 @@ export class CollaborationGateway
     if (syncStep === 0) {
       // Step 0: 클라이언트가 현재 상태 벡터 전송
       const stateVector = Y.encodeStateVector(doc);
-      client.emit('yjs-message', {
-        type: 'sync',
-        data: { syncStep: 1, update: Array.from(stateVector) },
+      client.emit('sync', {
+        syncStep: 1,
+        update: Array.from(stateVector),
       });
     } else if (syncStep === 1 && update) {
       // Step 1: 서버가 차이점 전송
@@ -240,9 +277,9 @@ export class CollaborationGateway
         doc,
         new Uint8Array(update as unknown as ArrayBufferLike),
       );
-      client.emit('yjs-message', {
-        type: 'sync',
-        data: { syncStep: 1, update: Array.from(diff) },
+      client.emit('sync', {
+        syncStep: 1,
+        update: Array.from(diff),
       });
     }
   }
@@ -257,9 +294,9 @@ export class CollaborationGateway
     Y.applyUpdate(doc, new Uint8Array(update as unknown as ArrayBufferLike));
 
     // 다른 클라이언트들에게 sync 메시지로 브로드캐스트
-    client.to(documentId).emit('yjs-message', {
-      type: 'sync',
-      data: { update: Array.from(update) },
+    client.to(documentId).emit('sync', {
+      syncStep: 1,
+      update: Array.from(update),
     });
   }
 
@@ -272,9 +309,8 @@ export class CollaborationGateway
     const { awareness } = data as { awareness: number[] };
 
     // 다른 클라이언트들에게 awareness 브로드캐스트
-    client.to(documentId).emit('yjs-message', {
-      type: 'awareness',
-      data: { awareness: Array.from(awareness) },
+    client.to(documentId).emit('awareness', {
+      awareness: Array.from(awareness),
     });
   }
 
