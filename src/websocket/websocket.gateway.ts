@@ -8,9 +8,12 @@ import {
   ConnectedSocket,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Logger } from '@nestjs/common';
+import { Logger, UseGuards } from '@nestjs/common';
 import * as Y from 'yjs';
-
+import { WsAuthGuard } from '../auth/ws-auth.guard';
+import { WsUser } from '../decorators/ws-user.decorator';
+import { UserAuth } from '../types/userAuth.type';
+@UseGuards(WsAuthGuard) // 인증 가드 적용
 @WebSocketGateway({
   cors: {
     origin: '*',
@@ -153,12 +156,14 @@ export class CollaborationGateway
 
   @SubscribeMessage('sync')
   handleSync(
+    @WsUser() user: UserAuth,
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { documentId: string; syncStep: number; update?: number[] },
+    @MessageBody()
+    data: { documentId: string; syncStep: number; update?: number[] },
   ) {
     try {
       this.logger.log(
-        `Received sync from client ${client.id} for document ${data.documentId}`,
+        `Received sync from client ${client.id} (user: ${user.userId}) for document ${data.documentId}`,
       );
 
       const doc = this.documentMap.get(data.documentId);
@@ -181,12 +186,13 @@ export class CollaborationGateway
 
   @SubscribeMessage('update')
   handleUpdate(
+    @WsUser() user: UserAuth,
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { documentId: string; update: number[] },
   ) {
     try {
       this.logger.log(
-        `Received update from client ${client.id} for document ${data.documentId}`,
+        `Received update from client ${client.id} (user: ${user.userId}) for document ${data.documentId}`,
       );
 
       const doc = this.documentMap.get(data.documentId);
@@ -209,12 +215,13 @@ export class CollaborationGateway
 
   @SubscribeMessage('awareness')
   handleAwareness(
+    @WsUser() user: UserAuth,
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { documentId: string; awareness: number[] },
   ) {
     try {
       this.logger.log(
-        `Received awareness from client ${client.id} for document ${data.documentId}`,
+        `Received awareness from client ${client.id} (user: ${user.userId}) for document ${data.documentId}`,
       );
 
       const doc = this.documentMap.get(data.documentId);
