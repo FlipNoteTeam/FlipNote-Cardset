@@ -3,12 +3,11 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { CardsetModule } from './cardset/cardset.module';
-import { CardsetManagerModule } from './cardset-manager/cardset-manager.module';
-import { Cardset as CardSet } from './cardset/entities/cardset.entity';
-import { CardsetManager as CardSetManager } from './cardset-manager/entities/cardset-manager.entity';
 import { CardModule } from './card/card.module';
-import { Card as Card } from './card/entities/card.entity';
+import { Cardset } from './cardset/entities/cardset.entity';
+import { Card } from './card/entities/card.entity';
 import { WebSocketModule } from './websocket/websocket.module';
+
 @Module({
   imports: [
     AuthModule,
@@ -20,11 +19,10 @@ import { WebSocketModule } from './websocket/websocket.module';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_DATABASE,
-      entities: [CardSet, CardSetManager, Card],
-      synchronize: false,
+      entities: [Cardset, Card],
+      synchronize: true, // 테이블 자동 생성
     }),
     CardsetModule,
-    CardsetManagerModule,
     CardModule,
     WebSocketModule,
   ],

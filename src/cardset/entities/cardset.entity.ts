@@ -1,7 +1,8 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { BaseEntity } from '../../common/entities/base.entity';
 
-@Entity('card_set')
-export class Cardset {
+@Entity('card_sets')
+export class Cardset extends BaseEntity {
   @PrimaryGeneratedColumn({ type: 'int' })
   id!: number;
 
@@ -27,4 +28,7 @@ export class Cardset {
 
   @Column({ name: 'image_url', type: 'varchar', nullable: false })
   imageUrl!: string;
+
+  @Column({ name: 'card_count', type: 'int', default: 10 })
+  cardCount!: number;
 }
