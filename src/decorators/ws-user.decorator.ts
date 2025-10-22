@@ -1,9 +1,8 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { UserAuth } from '../types/userAuth.type';
 
 export const WsUser = createParamDecorator(
-  (data: unknown, ctx: ExecutionContext): UserAuth => {
-    const client = ctx.switchToWs().getClient<{ data: { user?: UserAuth } }>();
-    return client.data?.user as UserAuth;
+  (data: unknown, ctx: ExecutionContext) => {
+    const client = ctx.switchToWs().getClient<{ data: { user?: any } }>();
+    return client.data?.user;
   },
 );
