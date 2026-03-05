@@ -7,9 +7,11 @@ import { CardsetManagerOrmEntity } from './infrastructure/persistence/orm/cardse
 
 import { CardsetRepositoryImpl } from './infrastructure/persistence/cardset.repository.impl';
 import { CardRepositoryImpl } from './infrastructure/persistence/card.repository.impl';
+import { CardsetManagerRepositoryImpl } from './infrastructure/persistence/cardset-manager.repository.impl';
 
 import { CARDSET_REPOSITORY } from './domain/repository/cardset.repository';
 import { CARD_REPOSITORY } from './domain/repository/card.repository';
+import { CARDSET_MANAGER_REPOSITORY } from './domain/repository/cardset-manager.repository';
 
 import { CardsetCardDomainService } from './domain/service/cardset-card.domain-service';
 
@@ -31,6 +33,7 @@ import { CardController } from './infrastructure/http/card.controller';
   providers: [
     { provide: CARDSET_REPOSITORY, useClass: CardsetRepositoryImpl },
     { provide: CARD_REPOSITORY, useClass: CardRepositoryImpl },
+    { provide: CARDSET_MANAGER_REPOSITORY, useClass: CardsetManagerRepositoryImpl },
     CardsetCardDomainService,
     CardsetUseCase,
     CardUseCase,

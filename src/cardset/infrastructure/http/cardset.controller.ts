@@ -19,10 +19,10 @@ export class CardsetController {
 
   @Post()
   async create(
-    @Headers('X-USER-ID') _userId: string,
+    @Headers('X-USER-ID') userId: string,
     @Body() dto: CreateCardsetDto,
   ): Promise<Cardset> {
-    return this.cardsetUseCase.create(dto);
+    return this.cardsetUseCase.create(parseInt(userId), dto);
   }
 
   @Get()

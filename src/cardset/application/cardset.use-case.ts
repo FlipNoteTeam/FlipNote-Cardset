@@ -1,9 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Cardset } from '../domain/model/cardset';
+import { CardsetManager } from '../domain/model/cardset-manager';
 import { CARDSET_REPOSITORY } from '../domain/repository/cardset.repository';
 import type { ICardsetRepository } from '../domain/repository/cardset.repository';
 import { CARD_REPOSITORY } from '../domain/repository/card.repository';
 import type { ICardRepository } from '../domain/repository/card.repository';
+import { CARDSET_MANAGER_REPOSITORY } from '../domain/repository/cardset-manager.repository';
+import type { ICardsetManagerRepository } from '../domain/repository/cardset-manager.repository';
 import { CardsetCardDomainService } from '../domain/service/cardset-card.domain-service';
 import { CreateCardsetDto } from './dto/create-cardset.dto';
 import { UpdateCardsetDto } from './dto/update-cardset.dto';
@@ -15,10 +18,12 @@ export class CardsetUseCase {
     private readonly cardsetRepository: ICardsetRepository,
     @Inject(CARD_REPOSITORY)
     private readonly cardRepository: ICardRepository,
+    @Inject(CARDSET_MANAGER_REPOSITORY)
+    private readonly cardsetManagerRepository: ICardsetManagerRepository,
     private readonly cardsetCardDomainService: CardsetCardDomainService,
   ) {}
 
-  async create(dto: CreateCardsetDto): Promise<Cardset> {
+  async create(userId: number, dto: CreateCardsetDto): Promise<Cardset> {
     const cardset = Cardset.create(dto);
     const savedCardset = await this.cardsetRepository.save(cardset);
 
@@ -31,6 +36,12 @@ export class CardsetUseCase {
     for (const card of cardsToAdd) {
       await this.cardRepository.save(card);
     }
+
+    const cardsetManager = CardsetManager.create({
+      userId,
+      cardSetId: savedCardset.id,
+    });
+    await this.cardsetManagerRepository.save(cardsetManager);
 
     return savedCardset;
   }
