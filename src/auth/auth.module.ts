@@ -1,13 +1,11 @@
 import { Module } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { AuthController } from './auth.controller';
-import { WsAuthGuard } from './ws-auth.guard';
-import authConfig from '../config/authConfig';
 import { ConfigModule } from '@nestjs/config';
+import { AuthService } from './domain/auth.service';
+import { WsAuthGuard } from './infrastructure/guard/ws-auth.guard';
+import authConfig from '../shared/config/auth.config';
 
 @Module({
   imports: [ConfigModule.forFeature(authConfig)],
-  controllers: [AuthController],
   providers: [AuthService, WsAuthGuard],
   exports: [AuthService, WsAuthGuard],
 })

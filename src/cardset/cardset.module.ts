@@ -1,14 +1,40 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Cardset } from './entities/cardset.entity';
-import { CardsetService } from './cardset.service';
-import { CardsetController } from './cardset.controller';
-import { CardModule } from '../card/card.module';
+
+import { CardsetOrmEntity } from './infrastructure/persistence/orm/cardset.orm-entity';
+import { CardOrmEntity } from './infrastructure/persistence/orm/card.orm-entity';
+import { CardsetManagerOrmEntity } from './infrastructure/persistence/orm/cardset-manager.orm-entity';
+
+import { CardsetRepositoryImpl } from './infrastructure/persistence/cardset.repository.impl';
+import { CardRepositoryImpl } from './infrastructure/persistence/card.repository.impl';
+
+import { CARDSET_REPOSITORY } from './domain/repository/cardset.repository';
+import { CARD_REPOSITORY } from './domain/repository/card.repository';
+
+import { CardsetCardDomainService } from './domain/service/cardset-card.domain-service';
+
+import { CardsetUseCase } from './application/cardset.use-case';
+import { CardUseCase } from './application/card.use-case';
+
+import { CardsetController } from './infrastructure/http/cardset.controller';
+import { CardController } from './infrastructure/http/card.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Cardset]), CardModule],
-  controllers: [CardsetController],
-  providers: [CardsetService],
-  exports: [CardsetService],
+  imports: [
+    TypeOrmModule.forFeature([
+      CardsetOrmEntity,
+      CardOrmEntity,
+      CardsetManagerOrmEntity,
+    ]),
+  ],
+  controllers: [CardsetController, CardController],
+  providers: [
+    { provide: CARDSET_REPOSITORY, useClass: CardsetRepositoryImpl },
+    { provide: CARD_REPOSITORY, useClass: CardRepositoryImpl },
+    CardsetCardDomainService,
+    CardsetUseCase,
+    CardUseCase,
+  ],
+  exports: [CardsetUseCase, CardUseCase],
 })
 export class CardsetModule {}

@@ -3,14 +3,15 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { CardsetModule } from './cardset/cardset.module';
-import { CardModule } from './card/card.module';
-import { Cardset } from './cardset/entities/cardset.entity';
-import { Card } from './card/entities/card.entity';
-import { WebSocketModule } from './websocket/websocket.module';
+import { CollaborationModule } from './collaboration/collaboration.module';
+
+import { CardsetOrmEntity } from './cardset/infrastructure/persistence/orm/cardset.orm-entity';
+import { CardOrmEntity } from './cardset/infrastructure/persistence/orm/card.orm-entity';
+import { CardsetManagerOrmEntity } from './cardset/infrastructure/persistence/orm/cardset-manager.orm-entity';
+import { YjsDocumentOrmEntity } from './collaboration/infrastructure/persistence/orm/yjs-document.orm-entity';
 
 @Module({
   imports: [
-    AuthModule,
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRoot({
       type: 'mysql',
@@ -19,14 +20,17 @@ import { WebSocketModule } from './websocket/websocket.module';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_DATABASE,
-      entities: [Cardset, Card],
-      synchronize: true, // 테이블 자동 생성
+      entities: [
+        CardsetOrmEntity,
+        CardOrmEntity,
+        CardsetManagerOrmEntity,
+        YjsDocumentOrmEntity,
+      ],
+      synchronize: true,
     }),
+    AuthModule,
     CardsetModule,
-    CardModule,
-    WebSocketModule,
+    CollaborationModule,
   ],
-  controllers: [],
-  providers: [],
 })
 export class AppModule {}
