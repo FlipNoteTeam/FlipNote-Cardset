@@ -14,9 +14,9 @@ message CardsetResponse {
   int32 id = 1;
   string name = 2;
   int32 group_id = 3;
-  bool public_visible = 4;
+  string visibility = 4;
   string category = 5;
   string hashtag = 6;
-  string image_url = 7;
+  int64 image_ref_id = 7;
   int32 card_count = 8;
 }

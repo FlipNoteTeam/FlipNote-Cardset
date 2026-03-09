@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package user_query;
+
+service UserQueryService {
+  rpc GetUser (GetUserRequest) returns (GetUserResponse);
+  rpc GetUsers (GetUsersRequest) returns (GetUsersResponse);
+}
+
+message GetUserRequest {
+  int64 user_id = 1;
+}
+
+message GetUserResponse {
+  int64 id = 1;
+  string email = 2;
+  string nickname = 3;
+  string profile_image_url = 4;
+}
+
+message GetUsersRequest {
+  repeated int64 user_ids = 1;
+}
+
+message GetUsersResponse {
+  repeated GetUserResponse users = 1;
+}

@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package group.v1;
+
+service GroupCommandService {
+  rpc GetGroupName (GetGroupNameRequest) returns (GetGroupNameResponse);
+}
+
+message GetGroupNameRequest {
+  int64 group_id = 1;
+}
+
+message GetGroupNameResponse {
+  string group_name = 1;
+}

@@ -10,10 +10,10 @@ export interface CardsetGrpcResponse {
   id: number;
   name: string;
   groupId: number;
-  publicVisible: boolean;
+  visibility: string;
   category: string;
   hashtag: string;
-  imageUrl: string;
+  imageRefId: number;
   cardCount: number;
 }
 
