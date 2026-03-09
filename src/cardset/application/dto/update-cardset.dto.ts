@@ -1,7 +1,8 @@
+import { Visibility } from '../../domain/model/visibility';
+
 export class UpdateCardsetDto {
   name?: string;
-  publicVisible?: boolean;
+  visibility?: Visibility;
   category?: string;
   hashtag?: string | null;
-  imageUrl?: string;
 }

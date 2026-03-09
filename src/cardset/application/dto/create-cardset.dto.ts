@@ -1,9 +1,11 @@
+import { Visibility } from '../../domain/model/visibility';
+
 export class CreateCardsetDto {
   name!: string;
   groupId!: number;
-  publicVisible!: boolean;
+  visibility!: Visibility;
   category!: string;
   hashtag?: string | null;
-  imageUrl!: string;
+  imageRefId!: number;
   cardCount?: number;
 }

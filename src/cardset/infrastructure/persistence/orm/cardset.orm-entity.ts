@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 import { BaseOrmEntity } from '../../../../shared/infrastructure/persistence/base.orm-entity';
+import { Visibility } from '../../../domain/model/visibility';
 
 @Entity('card_sets')
 export class CardsetOrmEntity extends BaseOrmEntity {
@@ -13,12 +14,12 @@ export class CardsetOrmEntity extends BaseOrmEntity {
   groupId!: number;
 
   @Column({
-    name: 'is_public',
-    type: 'boolean',
+    type: 'enum',
+    enum: Visibility,
     nullable: false,
-    default: false,
+    default: Visibility.PRIVATE,
   })
-  publicVisible!: boolean;
+  visibility!: Visibility;
 
   @Column({ type: 'varchar', length: 50, nullable: false })
   category!: string;
@@ -26,8 +27,8 @@ export class CardsetOrmEntity extends BaseOrmEntity {
   @Column({ type: 'varchar', nullable: true })
   hashtag?: string | null;
 
-  @Column({ name: 'image_url', type: 'varchar', nullable: false })
-  imageUrl!: string;
+  @Column({ name: 'image_ref_id', type: 'bigint', nullable: false })
+  imageRefId!: number;
 
   @Column({ name: 'card_count', type: 'int', default: 10 })
   cardCount!: number;

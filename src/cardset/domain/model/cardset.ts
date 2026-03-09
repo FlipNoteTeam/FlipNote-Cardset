@@ -1,14 +1,15 @@
 import { BaseDomainEntity } from '../../../shared/domain/base.entity';
+import { Visibility } from './visibility';
 
 export class Cardset extends BaseDomainEntity {
   constructor(
     public readonly id: number,
     public name: string,
     public groupId: number,
-    public publicVisible: boolean,
+    public visibility: Visibility,
     public category: string,
     public hashtag: string | null,
-    public imageUrl: string,
+    public readonly imageRefId: number,
     public cardCount: number,
     createdAt: Date,
     updatedAt: Date,
@@ -20,41 +21,42 @@ export class Cardset extends BaseDomainEntity {
   static create(props: {
     name: string;
     groupId: number;
-    publicVisible: boolean;
+    visibility: Visibility;
     category: string;
     hashtag?: string | null;
-    imageUrl: string;
+    imageRefId: number;
     cardCount?: number;
   }): Cardset {
     return new Cardset(
       0,
       props.name,
       props.groupId,
-      props.publicVisible,
+      props.visibility,
       props.category,
       props.hashtag ?? null,
-      props.imageUrl,
+      props.imageRefId,
       props.cardCount ?? 10,
       new Date(),
       new Date(),
     );
   }
 
-  updateInfo(props: Partial<{
-    name: string;
-    publicVisible: boolean;
-    category: string;
-    hashtag: string | null;
-    imageUrl: string;
-  }>): Cardset {
+  updateInfo(
+    props: Partial<{
+      name: string;
+      visibility: Visibility;
+      category: string;
+      hashtag: string | null;
+    }>,
+  ): Cardset {
     return new Cardset(
       this.id,
       props.name ?? this.name,
       this.groupId,
-      props.publicVisible ?? this.publicVisible,
+      props.visibility ?? this.visibility,
       props.category ?? this.category,
       props.hashtag !== undefined ? props.hashtag : this.hashtag,
-      props.imageUrl ?? this.imageUrl,
+      this.imageRefId,
       this.cardCount,
       this.createdAt,
       new Date(),
@@ -67,10 +69,10 @@ export class Cardset extends BaseDomainEntity {
       this.id,
       this.name,
       this.groupId,
-      this.publicVisible,
+      this.visibility,
       this.category,
       this.hashtag,
-      this.imageUrl,
+      this.imageRefId,
       newCount,
       this.createdAt,
       new Date(),

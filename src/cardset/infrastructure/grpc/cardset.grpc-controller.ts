@@ -19,10 +19,10 @@ export class CardsetGrpcController {
       id: cardset.id,
       name: cardset.name,
       groupId: cardset.groupId,
-      publicVisible: cardset.publicVisible,
+      visibility: cardset.visibility,
       category: cardset.category,
       hashtag: cardset.hashtag ?? '',
-      imageUrl: cardset.imageUrl,
+      imageRefId: cardset.imageRefId,
       cardCount: cardset.cardCount,
     };
   }
