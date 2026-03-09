@@ -1,4 +1,6 @@
-export class Cardset {
+import { BaseDomainEntity } from '../../../shared/domain/base.entity';
+
+export class Cardset extends BaseDomainEntity {
   constructor(
     public readonly id: number,
     public name: string,
@@ -8,10 +10,12 @@ export class Cardset {
     public hashtag: string | null,
     public imageUrl: string,
     public cardCount: number,
-    public readonly createdAt: Date,
-    public readonly updatedAt: Date,
-    public readonly deletedAt?: Date,
-  ) {}
+    createdAt: Date,
+    updatedAt: Date,
+    deletedAt?: Date,
+  ) {
+    super(createdAt, updatedAt, deletedAt);
+  }
 
   static create(props: {
     name: string;

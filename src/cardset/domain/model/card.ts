@@ -1,13 +1,17 @@
-export class Card {
+import { BaseDomainEntity } from '../../../shared/domain/base.entity';
+
+export class Card extends BaseDomainEntity {
   constructor(
     public readonly id: number,
     public content: string,
     public order: number,
     public readonly cardsetId: number,
-    public readonly createdAt: Date,
-    public readonly updatedAt: Date,
-    public readonly deletedAt?: Date,
-  ) {}
+    createdAt: Date,
+    updatedAt: Date,
+    deletedAt?: Date,
+  ) {
+    super(createdAt, updatedAt, deletedAt);
+  }
 
   static create(props: {
     content?: string;

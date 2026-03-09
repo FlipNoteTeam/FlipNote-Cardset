@@ -20,6 +20,7 @@ import { CardUseCase } from './application/card.use-case';
 
 import { CardsetController } from './infrastructure/http/cardset.controller';
 import { CardController } from './infrastructure/http/card.controller';
+import { CardsetGrpcController } from './infrastructure/grpc/cardset.grpc-controller';
 
 @Module({
   imports: [
@@ -29,7 +30,7 @@ import { CardController } from './infrastructure/http/card.controller';
       CardsetManagerOrmEntity,
     ]),
   ],
-  controllers: [CardsetController, CardController],
+  controllers: [CardsetController, CardController, CardsetGrpcController],
   providers: [
     { provide: CARDSET_REPOSITORY, useClass: CardsetRepositoryImpl },
     { provide: CARD_REPOSITORY, useClass: CardRepositoryImpl },
