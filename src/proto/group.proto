@@ -4,6 +4,7 @@ package group.v1;
 
 service GroupCommandService {
   rpc GetGroupName (GetGroupNameRequest) returns (GetGroupNameResponse);
+  rpc CheckUserInGroup (CheckUserInGroupRequest) returns (CheckUserInGroupResponse);
 }
 
 message GetGroupNameRequest {
@@ -12,4 +13,13 @@ message GetGroupNameRequest {
 
 message GetGroupNameResponse {
   string group_name = 1;
+}
+
+message CheckUserInGroupRequest {
+  int64 group_id = 1;
+  int64 user_id = 2;
+}
+
+message CheckUserInGroupResponse {
+  bool exists = 1;
 }

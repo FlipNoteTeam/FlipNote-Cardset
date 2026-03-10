@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { DataSource } from 'typeorm';
 import { Card } from '../domain/model/card';
 import { CARD_REPOSITORY } from '../domain/repository/card.repository';
 import type { ICardRepository } from '../domain/repository/card.repository';
@@ -10,6 +11,7 @@ export class CardUseCase {
   constructor(
     @Inject(CARD_REPOSITORY)
     private readonly cardRepository: ICardRepository,
+    private readonly dataSource: DataSource,
   ) {}
 
   async create(dto: CreateCardDto): Promise<Card> {
@@ -34,8 +36,10 @@ export class CardUseCase {
   }
 
   async reorderCards(cardOrders: { cardId: number; order: number }[]): Promise<void> {
-    for (const { cardId, order } of cardOrders) {
-      await this.cardRepository.updateOrder(cardId, order);
-    }
+    await this.dataSource.transaction(async (manager) => {
+      for (const { cardId, order } of cardOrders) {
+        await this.cardRepository.updateOrder(cardId, order, manager);
+      }
+    });
   }
 }

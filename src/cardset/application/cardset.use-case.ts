@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { DataSource } from 'typeorm';
 import { Cardset } from '../domain/model/cardset';
 import { CardsetManager } from '../domain/model/cardset-manager';
 import { CARDSET_REPOSITORY } from '../domain/repository/cardset.repository';
@@ -21,29 +22,32 @@ export class CardsetUseCase {
     @Inject(CARDSET_MANAGER_REPOSITORY)
     private readonly cardsetManagerRepository: ICardsetManagerRepository,
     private readonly cardsetCardDomainService: CardsetCardDomainService,
+    private readonly dataSource: DataSource,
   ) {}
 
   async create(userId: number, dto: CreateCardsetDto): Promise<Cardset> {
-    const cardset = Cardset.create(dto);
-    const savedCardset = await this.cardsetRepository.save(cardset);
+    return this.dataSource.transaction(async (manager) => {
+      const cardset = Cardset.create(dto);
+      const savedCardset = await this.cardsetRepository.save(cardset, manager);
 
-    const cardCount = dto.cardCount ?? 10;
-    const cardsToAdd = this.cardsetCardDomainService.buildCardsToAdd(
-      savedCardset.id,
-      0,
-      cardCount,
-    );
-    for (const card of cardsToAdd) {
-      await this.cardRepository.save(card);
-    }
+      const cardCount = dto.cardCount ?? 10;
+      const cardsToAdd = this.cardsetCardDomainService.buildCardsToAdd(
+        savedCardset.id,
+        0,
+        cardCount,
+      );
+      for (const card of cardsToAdd) {
+        await this.cardRepository.save(card, manager);
+      }
 
-    const cardsetManager = CardsetManager.create({
-      userId,
-      cardSetId: savedCardset.id,
+      const cardsetManager = CardsetManager.create({
+        userId,
+        cardSetId: savedCardset.id,
+      });
+      await this.cardsetManagerRepository.save(cardsetManager, manager);
+
+      return savedCardset;
     });
-    await this.cardsetManagerRepository.save(cardsetManager);
-
-    return savedCardset;
   }
 
   async findAll(): Promise<Cardset[]> {
@@ -63,32 +67,34 @@ export class CardsetUseCase {
   }
 
   async updateCardCount(id: number, newCardCount: number): Promise<Cardset | null> {
-    const cardset = await this.cardsetRepository.findById(id);
-    if (!cardset) return null;
+    return this.dataSource.transaction(async (manager) => {
+      const cardset = await this.cardsetRepository.findById(id);
+      if (!cardset) return null;
 
-    const currentCards = await this.cardRepository.findAllByCardsetId(id);
-    const currentCount = currentCards.length;
+      const currentCards = await this.cardRepository.findAllByCardsetId(id);
+      const currentCount = currentCards.length;
 
-    if (newCardCount > currentCount) {
-      const cardsToAdd = this.cardsetCardDomainService.buildCardsToAdd(
-        id,
-        currentCount,
-        newCardCount,
-      );
-      for (const card of cardsToAdd) {
-        await this.cardRepository.save(card);
+      if (newCardCount > currentCount) {
+        const cardsToAdd = this.cardsetCardDomainService.buildCardsToAdd(
+          id,
+          currentCount,
+          newCardCount,
+        );
+        for (const card of cardsToAdd) {
+          await this.cardRepository.save(card, manager);
+        }
+      } else if (newCardCount < currentCount) {
+        const cardsToRemove = this.cardsetCardDomainService.selectCardsToRemove(
+          currentCards,
+          newCardCount,
+        );
+        for (const card of cardsToRemove) {
+          await this.cardRepository.delete(card.id, manager);
+        }
       }
-    } else if (newCardCount < currentCount) {
-      const cardsToRemove = this.cardsetCardDomainService.selectCardsToRemove(
-        currentCards,
-        newCardCount,
-      );
-      for (const card of cardsToRemove) {
-        await this.cardRepository.delete(card.id);
-      }
-    }
 
-    const updatedCardset = cardset.changeCardCount(newCardCount);
-    return this.cardsetRepository.update(id, updatedCardset);
+      const updatedCardset = cardset.changeCardCount(newCardCount);
+      return this.cardsetRepository.update(id, updatedCardset);
+    });
   }
 }

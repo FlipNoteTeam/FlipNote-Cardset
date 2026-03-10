@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { ICardRepository } from '../../domain/repository/card.repository';
 import { Card } from '../../domain/model/card';
 import { CardOrmEntity } from './orm/card.orm-entity';
@@ -26,10 +26,11 @@ export class CardRepositoryImpl implements ICardRepository {
     return orms.map(CardMapper.toDomain);
   }
 
-  async save(card: Card): Promise<Card> {
+  async save(card: Card, manager?: EntityManager): Promise<Card> {
+    const repo = manager ? manager.getRepository(CardOrmEntity) : this.ormRepository;
     const ormData = CardMapper.toOrm(card);
-    const created = this.ormRepository.create(ormData);
-    const saved = await this.ormRepository.save(created);
+    const created = repo.create(ormData);
+    const saved = await repo.save(created);
     return CardMapper.toDomain(saved);
   }
 
@@ -38,11 +39,13 @@ export class CardRepositoryImpl implements ICardRepository {
     return this.findById(id);
   }
 
-  async delete(id: number): Promise<void> {
-    await this.ormRepository.delete(id);
+  async delete(id: number, manager?: EntityManager): Promise<void> {
+    const repo = manager ? manager.getRepository(CardOrmEntity) : this.ormRepository;
+    await repo.delete(id);
   }
 
-  async updateOrder(cardId: number, order: number): Promise<void> {
-    await this.ormRepository.update(cardId, { order });
+  async updateOrder(cardId: number, order: number, manager?: EntityManager): Promise<void> {
+    const repo = manager ? manager.getRepository(CardOrmEntity) : this.ormRepository;
+    await repo.update(cardId, { order });
   }
 }

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { ICardsetManagerRepository } from '../../domain/repository/cardset-manager.repository';
 import { CardsetManager } from '../../domain/model/cardset-manager';
 import { CardsetManagerOrmEntity } from './orm/cardset-manager.orm-entity';
@@ -13,10 +13,11 @@ export class CardsetManagerRepositoryImpl implements ICardsetManagerRepository {
     private readonly ormRepository: Repository<CardsetManagerOrmEntity>,
   ) {}
 
-  async save(cardsetManager: CardsetManager): Promise<CardsetManager> {
+  async save(cardsetManager: CardsetManager, manager?: EntityManager): Promise<CardsetManager> {
+    const repo = manager ? manager.getRepository(CardsetManagerOrmEntity) : this.ormRepository;
     const ormData = CardsetManagerMapper.toOrm(cardsetManager);
-    const created = this.ormRepository.create(ormData);
-    const saved = await this.ormRepository.save(created);
+    const created = repo.create(ormData);
+    const saved = await repo.save(created);
     return CardsetManagerMapper.toDomain(saved);
   }
 

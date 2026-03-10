@@ -11,6 +11,6 @@ export class UpdateCardsetDto {
   @ApiPropertyOptional({ example: '수학' })
   category?: string;
 
-  @ApiPropertyOptional({ example: '#수학,#공식' })
+  @ApiPropertyOptional({ example: '#수학 #공식' })
   hashtag?: string | null;
 }
