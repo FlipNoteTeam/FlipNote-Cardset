@@ -21,6 +21,8 @@ import { CardUseCase } from './application/card.use-case';
 import { CardsetController } from './infrastructure/http/cardset.controller';
 import { CardController } from './infrastructure/http/card.controller';
 import { CardsetGrpcController } from './infrastructure/grpc/cardset.grpc-controller';
+import { GroupGrpcClient } from './infrastructure/grpc/group-grpc.client';
+import { GrpcClientModule } from '../shared/grpc/grpc-client.module';
 
 @Module({
   imports: [
@@ -29,6 +31,7 @@ import { CardsetGrpcController } from './infrastructure/grpc/cardset.grpc-contro
       CardOrmEntity,
       CardsetManagerOrmEntity,
     ]),
+    GrpcClientModule,
   ],
   controllers: [CardsetController, CardController, CardsetGrpcController],
   providers: [
@@ -36,6 +39,7 @@ import { CardsetGrpcController } from './infrastructure/grpc/cardset.grpc-contro
     { provide: CARD_REPOSITORY, useClass: CardRepositoryImpl },
     { provide: CARDSET_MANAGER_REPOSITORY, useClass: CardsetManagerRepositoryImpl },
     CardsetCardDomainService,
+    GroupGrpcClient,
     CardsetUseCase,
     CardUseCase,
   ],

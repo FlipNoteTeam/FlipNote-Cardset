@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Visibility } from '../../domain/model/visibility';
+import { Visibility } from '../../../domain/model/visibility';
 
-export class UpdateCardsetDto {
+export class UpdateCardsetRequest {
   @ApiPropertyOptional({ example: '수정된 단어장' })
   name?: string;
 

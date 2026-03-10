@@ -3,8 +3,8 @@ import { DataSource } from 'typeorm';
 import { Card } from '../domain/model/card';
 import { CARD_REPOSITORY } from '../domain/repository/card.repository';
 import type { ICardRepository } from '../domain/repository/card.repository';
-import { CreateCardDto } from './dto/create-card.dto';
-import { UpdateCardDto } from './dto/update-card.dto';
+import { CreateCardRequest } from './dto/request/create-card.request';
+import { UpdateCardRequest } from './dto/request/update-card.request';
 
 @Injectable()
 export class CardUseCase {
@@ -14,7 +14,7 @@ export class CardUseCase {
     private readonly dataSource: DataSource,
   ) {}
 
-  async create(dto: CreateCardDto): Promise<Card> {
+  async create(dto: CreateCardRequest): Promise<Card> {
     const card = Card.create(dto);
     return this.cardRepository.save(card);
   }
@@ -27,7 +27,7 @@ export class CardUseCase {
     return this.cardRepository.findById(id);
   }
 
-  async update(id: number, dto: UpdateCardDto): Promise<Card | null> {
+  async update(id: number, dto: UpdateCardRequest): Promise<Card | null> {
     return this.cardRepository.update(id, dto);
   }
 

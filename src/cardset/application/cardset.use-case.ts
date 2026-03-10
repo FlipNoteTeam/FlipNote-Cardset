@@ -9,8 +9,9 @@ import type { ICardRepository } from '../domain/repository/card.repository';
 import { CARDSET_MANAGER_REPOSITORY } from '../domain/repository/cardset-manager.repository';
 import type { ICardsetManagerRepository } from '../domain/repository/cardset-manager.repository';
 import { CardsetCardDomainService } from '../domain/service/cardset-card.domain-service';
-import { CreateCardsetDto } from './dto/create-cardset.dto';
-import { UpdateCardsetDto } from './dto/update-cardset.dto';
+import { GroupGrpcClient } from '../infrastructure/grpc/group-grpc.client';
+import { CreateCardsetRequest } from './dto/request/create-cardset.request';
+import { UpdateCardsetRequest } from './dto/request/update-cardset.request';
 
 @Injectable()
 export class CardsetUseCase {
@@ -22,10 +23,13 @@ export class CardsetUseCase {
     @Inject(CARDSET_MANAGER_REPOSITORY)
     private readonly cardsetManagerRepository: ICardsetManagerRepository,
     private readonly cardsetCardDomainService: CardsetCardDomainService,
+    private readonly groupGrpcClient: GroupGrpcClient,
     private readonly dataSource: DataSource,
   ) {}
 
-  async create(userId: number, dto: CreateCardsetDto): Promise<Cardset> {
+  async create(userId: number, dto: CreateCardsetRequest): Promise<Cardset> {
+    await this.groupGrpcClient.checkUserInGroup(dto.groupId, userId);
+
     return this.dataSource.transaction(async (manager) => {
       const cardset = Cardset.create(dto);
       const savedCardset = await this.cardsetRepository.save(cardset, manager);
@@ -58,7 +62,16 @@ export class CardsetUseCase {
     return this.cardsetRepository.findById(id);
   }
 
-  async update(id: number, dto: UpdateCardsetDto): Promise<Cardset | null> {
+  async update(
+    id: number,
+    userId: number,
+    dto: UpdateCardsetRequest,
+  ): Promise<Cardset | null> {
+    const cardset = await this.cardsetRepository.findById(id);
+    if (!cardset) return null;
+
+    await this.groupGrpcClient.checkUserInGroup(cardset.groupId, userId);
+
     return this.cardsetRepository.update(id, dto);
   }
 

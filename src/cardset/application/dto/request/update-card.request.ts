@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
-export class UpdateCardDto {
+export class UpdateCardRequest {
   @ApiPropertyOptional({ example: '수정된 내용' })
   content?: string;
 

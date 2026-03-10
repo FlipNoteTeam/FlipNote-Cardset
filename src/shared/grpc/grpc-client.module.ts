@@ -10,7 +10,7 @@ import { join } from 'path';
         transport: Transport.GRPC,
         options: {
           package: 'group.v1',
-          protoPath: join(__dirname, '../proto/group.proto'),
+          protoPath: join(__dirname, '../../proto/group.proto'),
           url: process.env.GRPC_GROUP_URL ?? 'localhost:9094',
         },
       },
@@ -19,7 +19,7 @@ import { join } from 'path';
         transport: Transport.GRPC,
         options: {
           package: 'image.v1',
-          protoPath: join(__dirname, '../proto/image.proto'),
+          protoPath: join(__dirname, '../../proto/image.proto'),
           url: process.env.GRPC_IMAGE_URL ?? 'localhost:9092',
         },
       },
@@ -28,7 +28,7 @@ import { join } from 'path';
         transport: Transport.GRPC,
         options: {
           package: 'user_query',
-          protoPath: join(__dirname, '../proto/user.proto'),
+          protoPath: join(__dirname, '../../proto/user.proto'),
           url: process.env.GRPC_USER_URL ?? 'localhost:9091',
         },
       },

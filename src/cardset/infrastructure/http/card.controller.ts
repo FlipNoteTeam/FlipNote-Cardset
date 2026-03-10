@@ -9,9 +9,11 @@ import {
   Headers,
 } from '@nestjs/common';
 import { CardUseCase } from '../../application/card.use-case';
-import { CreateCardDto } from '../../application/dto/create-card.dto';
-import { UpdateCardDto } from '../../application/dto/update-card.dto';
-import { Card } from '../../domain/model/card';
+import { CreateCardRequest } from '../../application/dto/request/create-card.request';
+import { UpdateCardRequest } from '../../application/dto/request/update-card.request';
+import { ReorderCardsRequest } from '../../application/dto/request/reorder-cards.request';
+import { CardCreateResponse } from '../../application/dto/response/card-create.response';
+import { CardResponse } from '../../application/dto/response/card.response';
 
 @Controller('cards')
 export class CardController {
@@ -20,49 +22,55 @@ export class CardController {
   @Post()
   async create(
     @Headers('X-USER-ID') _userId: string,
-    @Body() dto: CreateCardDto,
-  ): Promise<Card> {
-    return this.cardUseCase.create(dto);
+    @Body() dto: CreateCardRequest,
+  ): Promise<CardCreateResponse> {
+    const card = await this.cardUseCase.create(dto);
+    return CardCreateResponse.from(card.id);
   }
 
   @Get('cardset/:cardsetId')
   async findByCardsetId(
     @Headers('X-USER-ID') _userId: string,
     @Param('cardsetId') cardsetId: string,
-  ): Promise<Card[]> {
-    return this.cardUseCase.findAllByCardsetId(parseInt(cardsetId));
+  ): Promise<CardResponse[]> {
+    const cards = await this.cardUseCase.findAllByCardsetId(
+      parseInt(cardsetId),
+    );
+    return cards.map((c) => CardResponse.from(c));
   }
 
-  @Get(':id')
+  @Get(':cardId')
   async findOne(
     @Headers('X-USER-ID') _userId: string,
-    @Param('id') id: string,
-  ): Promise<Card | null> {
-    return this.cardUseCase.findOne(parseInt(id));
+    @Param('cardId') cardId: string,
+  ): Promise<CardResponse | null> {
+    const card = await this.cardUseCase.findOne(parseInt(cardId));
+    return card ? CardResponse.from(card) : null;
   }
 
   @Put('reorder')
   async reorderCards(
     @Headers('X-USER-ID') _userId: string,
-    @Body() cardOrders: { cardId: number; order: number }[],
+    @Body() dto: ReorderCardsRequest,
   ): Promise<void> {
-    return this.cardUseCase.reorderCards(cardOrders);
+    return this.cardUseCase.reorderCards(dto.cardOrders);
   }
 
-  @Put(':id')
+  @Put(':cardId')
   async update(
     @Headers('X-USER-ID') _userId: string,
-    @Param('id') id: string,
-    @Body() dto: UpdateCardDto,
-  ): Promise<Card | null> {
-    return this.cardUseCase.update(parseInt(id), dto);
+    @Param('cardId') cardId: string,
+    @Body() dto: UpdateCardRequest,
+  ): Promise<CardResponse | null> {
+    const card = await this.cardUseCase.update(parseInt(cardId), dto);
+    return card ? CardResponse.from(card) : null;
   }
 
-  @Delete(':id')
+  @Delete(':cardId')
   async remove(
     @Headers('X-USER-ID') _userId: string,
-    @Param('id') id: string,
+    @Param('cardId') cardId: string,
   ): Promise<void> {
-    return this.cardUseCase.remove(parseInt(id));
+    return this.cardUseCase.remove(parseInt(cardId));
   }
 }

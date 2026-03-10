@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-export class CreateCardDto {
+export class CreateCardRequest {
   @ApiPropertyOptional({ example: '안녕하세요' })
   content?: string;
 

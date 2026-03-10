@@ -8,7 +8,7 @@ class CardOrderItem {
   order!: number;
 }
 
-export class ReorderCardsDto {
+export class ReorderCardsRequest {
   @ApiProperty({ type: [CardOrderItem] })
   cardOrders!: CardOrderItem[];
 }
