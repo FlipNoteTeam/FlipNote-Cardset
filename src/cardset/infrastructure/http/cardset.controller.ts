@@ -60,20 +60,21 @@ export class CardsetController {
 
   @Delete(':cardsetId')
   async remove(
-    @Headers('X-USER-ID') _userId: string,
+    @Headers('X-USER-ID') userId: string,
     @Param('cardsetId') cardsetId: string,
   ): Promise<void> {
-    return this.cardsetUseCase.remove(parseInt(cardsetId));
+    return this.cardsetUseCase.remove(parseInt(cardsetId), parseInt(userId));
   }
 
   @Put(':cardsetId/card-count')
   async updateCardCount(
-    @Headers('X-USER-ID') _userId: string,
+    @Headers('X-USER-ID') userId: string,
     @Param('cardsetId') cardsetId: string,
     @Body() body: { cardCount: number },
   ): Promise<CardsetResponse | null> {
     const cardset = await this.cardsetUseCase.updateCardCount(
       parseInt(cardsetId),
+      parseInt(userId),
       body.cardCount,
     );
     return cardset ? CardsetResponse.from(cardset) : null;
