@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package cardset;
+
+service CardsetService {
+  rpc GetCardset (GetCardsetRequest) returns (CardsetResponse);
+}
+
+message GetCardsetRequest {
+  int32 id = 1;
+}
+
+message CardsetResponse {
+  int32 id = 1;
+  string name = 2;
+  int32 group_id = 3;
+  string visibility = 4;
+  string category = 5;
+  string hashtag = 6;
+  int64 image_ref_id = 7;
+  int32 card_count = 8;
+}

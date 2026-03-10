@@ -1,0 +1,50 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Visibility } from '../../../domain/model/visibility';
+import { Cardset } from '../../../domain/model/cardset';
+
+export class CardsetResponse {
+  @ApiProperty({ example: 1 })
+  id!: number;
+
+  @ApiProperty({ example: '영어 단어장' })
+  name!: string;
+
+  @ApiProperty({ example: 1 })
+  groupId!: number;
+
+  @ApiProperty({ enum: Visibility, example: Visibility.PRIVATE })
+  visibility!: Visibility;
+
+  @ApiProperty({ example: '언어' })
+  category!: string;
+
+  @ApiPropertyOptional({ example: '#영어#단어' })
+  hashtag!: string | null;
+
+  @ApiProperty({ example: 1001 })
+  imageRefId!: number;
+
+  @ApiProperty({ example: 10 })
+  cardCount!: number;
+
+  @ApiProperty()
+  createdAt!: Date;
+
+  @ApiProperty()
+  updatedAt!: Date;
+
+  static from(cardset: Cardset): CardsetResponse {
+    const res = new CardsetResponse();
+    res.id = cardset.id;
+    res.name = cardset.name;
+    res.groupId = cardset.groupId;
+    res.visibility = cardset.visibility;
+    res.category = cardset.category;
+    res.hashtag = cardset.hashtag;
+    res.imageRefId = cardset.imageRefId;
+    res.cardCount = cardset.cardCount;
+    res.createdAt = cardset.createdAt;
+    res.updatedAt = cardset.updatedAt;
+    return res;
+  }
+}

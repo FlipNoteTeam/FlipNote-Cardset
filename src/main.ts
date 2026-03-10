@@ -3,9 +3,20 @@ import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { join } from 'path';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.GRPC,
+    options: {
+      package: 'cardset',
+      protoPath: join(__dirname, 'proto/cardset.proto'),
+      url: `0.0.0.0:${process.env.GRPC_PORT ?? 5000}`,
+    },
+  });
 
   // 정적 파일 서빙 설정 제거 (YJS 제거로 불필요)
 
@@ -32,6 +43,7 @@ async function bootstrap() {
   //   SwaggerModule.setup('api-docs', app, document);
   // }
 
+  await app.startAllMicroservices();
   await app.listen(process.env.PORT ?? 3000);
 }
 void bootstrap();

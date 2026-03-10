@@ -3,15 +3,15 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { CardsetModule } from './cardset/cardset.module';
-import { CardsetManagerModule } from './cardset-manager/cardset-manager.module';
-import { Cardset as CardSet } from './cardset/entities/cardset.entity';
-import { CardsetManager as CardSetManager } from './cardset-manager/entities/cardset-manager.entity';
-import { CardModule } from './card/card.module';
-import { Card as Card } from './card/entities/card.entity';
-import { WebSocketModule } from './websocket/websocket.module';
+import { CollaborationModule } from './collaboration/collaboration.module';
+
+import { CardsetOrmEntity } from './cardset/infrastructure/persistence/orm/cardset.orm-entity';
+import { CardOrmEntity } from './cardset/infrastructure/persistence/orm/card.orm-entity';
+import { CardsetManagerOrmEntity } from './cardset/infrastructure/persistence/orm/cardset-manager.orm-entity';
+import { YjsDocumentOrmEntity } from './collaboration/infrastructure/persistence/orm/yjs-document.orm-entity';
+
 @Module({
   imports: [
-    AuthModule,
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRoot({
       type: 'mysql',
@@ -20,15 +20,17 @@ import { WebSocketModule } from './websocket/websocket.module';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_DATABASE,
-      entities: [CardSet, CardSetManager, Card],
-      synchronize: false,
+      entities: [
+        CardsetOrmEntity,
+        CardOrmEntity,
+        CardsetManagerOrmEntity,
+        YjsDocumentOrmEntity,
+      ],
+      synchronize: true,
     }),
+    AuthModule,
     CardsetModule,
-    CardsetManagerModule,
-    CardModule,
-    WebSocketModule,
+    CollaborationModule,
   ],
-  controllers: [],
-  providers: [],
 })
 export class AppModule {}
