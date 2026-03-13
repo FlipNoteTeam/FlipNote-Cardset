@@ -3,14 +3,25 @@ syntax = "proto3";
 package cardset;
 
 service CardsetService {
-  rpc GetCardset (GetCardsetRequest) returns (CardsetResponse);
+  rpc IsCardSetViewable (IsCardSetViewableRequest) returns (IsCardSetViewableResponse);
+  rpc GetCardSetsByIds (GetCardSetsByIdsRequest) returns (GetCardSetsByIdsResponse);
 }
 
-message GetCardsetRequest {
-  int32 id = 1;
+message IsCardSetViewableRequest {
+  int32 card_set_id = 1;
+  int32 user_id = 2;
 }
 
-message CardsetResponse {
+message IsCardSetViewableResponse {
+  bool viewable = 1;
+}
+
+message GetCardSetsByIdsRequest {
+  repeated int32 card_set_ids = 1;
+  int32 user_id = 2;
+}
+
+message CardSetSummary {
   int32 id = 1;
   string name = 2;
   int32 group_id = 3;
@@ -19,4 +30,8 @@ message CardsetResponse {
   string hashtag = 6;
   int64 image_ref_id = 7;
   int32 card_count = 8;
+}
+
+message GetCardSetsByIdsResponse {
+  repeated CardSetSummary card_sets = 1;
 }

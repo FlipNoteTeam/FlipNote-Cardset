@@ -27,4 +27,11 @@ export class GroupGrpcClient implements OnModuleInit {
       throw new ForbiddenException('해당 그룹에 속한 유저가 아닙니다.');
     }
   }
+
+  async isUserInGroup(groupId: number, userId: number): Promise<boolean> {
+    const result = await firstValueFrom(
+      this.groupService.checkUserInGroup({ groupId, userId }),
+    );
+    return result.exists;
+  }
 }

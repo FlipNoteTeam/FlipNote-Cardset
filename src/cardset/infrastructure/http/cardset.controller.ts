@@ -29,18 +29,18 @@ export class CardsetController {
 
   @Get()
   async findAll(
-    @Headers('X-USER-ID') _userId: string,
+    @Headers('X-USER-ID') userId: string,
   ): Promise<CardsetResponse[]> {
-    const cardsets = await this.cardsetUseCase.findAll();
+    const cardsets = await this.cardsetUseCase.findAll(parseInt(userId));
     return cardsets.map((c) => CardsetResponse.from(c));
   }
 
   @Get(':cardsetId')
   async findOne(
-    @Headers('X-USER-ID') _userId: string,
+    @Headers('X-USER-ID') userId: string,
     @Param('cardsetId') cardsetId: string,
   ): Promise<CardsetResponse | null> {
-    const cardset = await this.cardsetUseCase.findOne(parseInt(cardsetId));
+    const cardset = await this.cardsetUseCase.findOne(parseInt(cardsetId), parseInt(userId));
     return cardset ? CardsetResponse.from(cardset) : null;
   }
 

@@ -1,29 +1,37 @@
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
 import { CardsetUseCase } from '../../application/cardset.use-case';
-import type { GetCardsetRequest, CardsetGrpcResponse } from '../../../shared/grpc/grpc.types';
+import type {
+  IsCardSetViewableRequest,
+  IsCardSetViewableResponse,
+  GetCardSetsByIdsRequest,
+  GetCardSetsByIdsResponse,
+} from '../../../shared/grpc/grpc.types';
 
 @Controller()
 export class CardsetGrpcController {
   constructor(private readonly cardsetUseCase: CardsetUseCase) {}
 
-  @GrpcMethod('CardsetService', 'GetCardset')
-  async getCardset(data: GetCardsetRequest): Promise<CardsetGrpcResponse> {
-    const cardset = await this.cardsetUseCase.findOne(data.id);
+  @GrpcMethod('CardsetService', 'IsCardSetViewable')
+  async isCardSetViewable(data: IsCardSetViewableRequest): Promise<IsCardSetViewableResponse> {
+    const viewable = await this.cardsetUseCase.isCardSetViewable(data.cardSetId, data.userId);
+    return { viewable };
+  }
 
-    if (!cardset) {
-      throw new Error(`Cardset with id ${data.id} not found`);
-    }
-
+  @GrpcMethod('CardsetService', 'GetCardSetsByIds')
+  async getCardSetsByIds(data: GetCardSetsByIdsRequest): Promise<GetCardSetsByIdsResponse> {
+    const cardsets = await this.cardsetUseCase.getCardSetsByIds(data.cardSetIds, data.userId);
     return {
-      id: cardset.id,
-      name: cardset.name,
-      groupId: cardset.groupId,
-      visibility: cardset.visibility,
-      category: cardset.category,
-      hashtag: cardset.hashtag ?? '',
-      imageRefId: cardset.imageRefId,
-      cardCount: cardset.cardCount,
+      cardSets: cardsets.map((c) => ({
+        id: c.id,
+        name: c.name,
+        groupId: c.groupId,
+        visibility: c.visibility,
+        category: c.category,
+        hashtag: c.hashtag ?? '',
+        imageRefId: c.imageRefId,
+        cardCount: c.cardCount,
+      })),
     };
   }
 }

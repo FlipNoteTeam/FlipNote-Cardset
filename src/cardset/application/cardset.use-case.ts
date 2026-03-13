@@ -7,6 +7,7 @@ import {
 import { DataSource } from 'typeorm';
 import { Cardset } from '../domain/model/cardset';
 import { CardsetManager } from '../domain/model/cardset-manager';
+import { Visibility } from '../domain/model/visibility';
 import { CARDSET_REPOSITORY } from '../domain/repository/cardset.repository';
 import type { ICardsetRepository } from '../domain/repository/cardset.repository';
 import { CARD_REPOSITORY } from '../domain/repository/card.repository';
@@ -73,12 +74,33 @@ export class CardsetUseCase {
     });
   }
 
-  async findAll(): Promise<Cardset[]> {
-    return this.cardsetRepository.findAll();
+  async findAll(userId: number): Promise<Cardset[]> {
+    const cardsets = await this.cardsetRepository.findAll();
+    const viewable: Cardset[] = [];
+    for (const cardset of cardsets) {
+      if (cardset.visibility === Visibility.PUBLIC) {
+        viewable.push(cardset);
+      } else {
+        const inGroup = await this.groupGrpcClient.isUserInGroup(
+          cardset.groupId,
+          userId,
+        );
+        if (inGroup) viewable.push(cardset);
+      }
+    }
+    return viewable;
   }
 
-  async findOne(id: number): Promise<Cardset | null> {
-    return this.cardsetRepository.findById(id);
+  async findOne(id: number, userId: number): Promise<Cardset | null> {
+    const cardset = await this.cardsetRepository.findById(id);
+    if (!cardset) return null;
+    if (cardset.visibility === Visibility.PUBLIC) return cardset;
+    const inGroup = await this.groupGrpcClient.isUserInGroup(
+      cardset.groupId,
+      userId,
+    );
+    if (!inGroup) throw new ForbiddenException('해당 그룹에 속한 유저가 아닙니다.');
+    return cardset;
   }
 
   async update(
@@ -97,6 +119,30 @@ export class CardsetUseCase {
   async remove(id: number, userId: number): Promise<void> {
     await this.checkIsManager(id, userId);
     return this.cardsetRepository.delete(id);
+  }
+
+  async isCardSetViewable(cardSetId: number, userId: number): Promise<boolean> {
+    const cardset = await this.cardsetRepository.findById(cardSetId);
+    if (!cardset) return false;
+    if (cardset.visibility === Visibility.PUBLIC) return true;
+    return this.groupGrpcClient.isUserInGroup(cardset.groupId, userId);
+  }
+
+  async getCardSetsByIds(cardSetIds: number[], userId: number): Promise<Cardset[]> {
+    const cardsets = await this.cardsetRepository.findByIds(cardSetIds);
+    const viewable: Cardset[] = [];
+    for (const cardset of cardsets) {
+      if (cardset.visibility === Visibility.PUBLIC) {
+        viewable.push(cardset);
+      } else {
+        const inGroup = await this.groupGrpcClient.isUserInGroup(
+          cardset.groupId,
+          userId,
+        );
+        if (inGroup) viewable.push(cardset);
+      }
+    }
+    return viewable;
   }
 
   async updateCardCount(

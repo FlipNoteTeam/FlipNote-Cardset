@@ -25,6 +25,12 @@ export class CardsetRepositoryImpl implements ICardsetRepository {
     return orm ? CardsetMapper.toDomain(orm) : null;
   }
 
+  async findByIds(ids: number[]): Promise<Cardset[]> {
+    if (ids.length === 0) return [];
+    const orms = await this.ormRepository.findBy(ids.map((id) => ({ id })));
+    return orms.map(CardsetMapper.toDomain);
+  }
+
   async save(cardset: Cardset, manager?: EntityManager): Promise<Cardset> {
     const repo = manager ? manager.getRepository(CardsetOrmEntity) : this.ormRepository;
     const ormData = CardsetMapper.toOrm(cardset);
