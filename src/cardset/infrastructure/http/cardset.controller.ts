@@ -32,8 +32,12 @@ export class CardsetController {
   async findAll(
     @Headers('X-USER-ID') userId: string,
   ): Promise<ApiResponse<CardsetResponse[]>> {
-    const cardsets = await this.cardsetUseCase.findAll(parseInt(userId));
-    return ApiResponse.success(cardsets.map((c) => CardsetResponse.from(c)));
+    const results = await this.cardsetUseCase.findAll(parseInt(userId));
+    return ApiResponse.success(
+      results.map(({ cardset, imageUrl }) =>
+        CardsetResponse.from(cardset, imageUrl),
+      ),
+    );
   }
 
   @Get(':cardsetId')
@@ -41,8 +45,13 @@ export class CardsetController {
     @Headers('X-USER-ID') userId: string,
     @Param('cardsetId') cardsetId: string,
   ): Promise<ApiResponse<CardsetResponse | null>> {
-    const cardset = await this.cardsetUseCase.findOne(parseInt(cardsetId), parseInt(userId));
-    return ApiResponse.success(cardset ? CardsetResponse.from(cardset) : null);
+    const result = await this.cardsetUseCase.findOne(
+      parseInt(cardsetId),
+      parseInt(userId),
+    );
+    return ApiResponse.success(
+      result ? CardsetResponse.from(result.cardset, result.imageUrl) : null,
+    );
   }
 
   @Put(':cardsetId')

@@ -24,7 +24,7 @@ export interface CardSetSummary {
   visibility: string;
   category: string;
   hashtag: string;
-  imageRefId: number;
+  imageRefId: number | null;
   cardCount: number;
 }
 

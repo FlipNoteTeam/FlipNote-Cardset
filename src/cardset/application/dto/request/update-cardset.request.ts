@@ -13,4 +13,7 @@ export class UpdateCardsetRequest {
 
   @ApiPropertyOptional({ example: '#수학 #공식' })
   hashtag?: string | null;
+
+  @ApiPropertyOptional({ example: 1001 })
+  imageRefId?: number;
 }

@@ -9,7 +9,7 @@ export class Cardset extends BaseDomainEntity {
     public visibility: Visibility,
     public category: string,
     public hashtag: string | null,
-    public readonly imageRefId: number,
+    public readonly imageRefId: number | null,
     public cardCount: number,
     createdAt: Date,
     updatedAt: Date,
@@ -24,7 +24,7 @@ export class Cardset extends BaseDomainEntity {
     visibility: Visibility;
     category: string;
     hashtag?: string | null;
-    imageRefId: number;
+    imageRefId?: number | null;
     cardCount?: number;
   }): Cardset {
     return new Cardset(
@@ -34,7 +34,7 @@ export class Cardset extends BaseDomainEntity {
       props.visibility,
       props.category,
       props.hashtag ?? null,
-      props.imageRefId,
+      props.imageRefId ?? null,
       props.cardCount ?? 10,
       new Date(),
       new Date(),

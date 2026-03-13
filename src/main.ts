@@ -22,19 +22,14 @@ async function bootstrap() {
   app.useWebSocketAdapter(new IoAdapter(app));
   app.useGlobalFilters(new GlobalExceptionFilter());
 
-  if (
-    process.env.SWAGGER_ENABLED === 'true' ||
-    process.env.NODE_ENV !== 'production'
-  ) {
-    const config = new DocumentBuilder()
-      .setTitle('Flip Note API')
-      .setDescription('API documentation')
-      .setVersion('1.0.0')
-      .addBearerAuth()
-      .build();
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api-docs', app, document);
-  }
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('Flip Note API')
+    .setDescription('API documentation')
+    .setVersion('1.0.0')
+    .addBearerAuth()
+    .build();
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('api-docs', app, document);
 
   await app.startAllMicroservices();
   await app.listen(process.env.PORT ?? 3000);
