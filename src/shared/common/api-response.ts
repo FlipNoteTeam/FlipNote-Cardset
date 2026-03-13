@@ -20,7 +20,10 @@ export class ApiResponse<T> {
     this.data = data;
   }
 
-  static success<T>(data: T, message = '요청이 성공적으로 처리되었습니다.'): ApiResponse<T> {
+  static success<T>(
+    data: T,
+    message = '요청이 성공적으로 처리되었습니다.',
+  ): ApiResponse<T> {
     return new ApiResponse(200, 'SUCCESS', message, data);
   }
 

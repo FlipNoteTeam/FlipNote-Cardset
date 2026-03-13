@@ -2,7 +2,6 @@ import { Observable } from 'rxjs';
 
 // ── cardset.proto 메시지 타입 ─────────────────────────────────────
 
-
 export interface IsCardSetViewableRequest {
   cardSetId: number;
   userId: number;
@@ -36,6 +35,10 @@ export interface GetCardSetsByIdsResponse {
 // 다른 서비스에서 이 서버를 호출할 때 사용하는 클라이언트 타입
 
 export interface CardsetServiceClient {
-  isCardSetViewable(data: IsCardSetViewableRequest): Observable<IsCardSetViewableResponse>;
-  getCardSetsByIds(data: GetCardSetsByIdsRequest): Observable<GetCardSetsByIdsResponse>;
+  isCardSetViewable(
+    data: IsCardSetViewableRequest,
+  ): Observable<IsCardSetViewableResponse>;
+  getCardSetsByIds(
+    data: GetCardSetsByIdsRequest,
+  ): Observable<GetCardSetsByIdsResponse>;
 }

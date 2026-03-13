@@ -35,7 +35,9 @@ export class CardUseCase {
     return this.cardRepository.delete(id);
   }
 
-  async reorderCards(cardOrders: { cardId: number; order: number }[]): Promise<void> {
+  async reorderCards(
+    cardOrders: { cardId: number; order: number }[],
+  ): Promise<void> {
     await this.dataSource.transaction(async (manager) => {
       for (const { cardId, order } of cardOrders) {
         await this.cardRepository.updateOrder(cardId, order, manager);

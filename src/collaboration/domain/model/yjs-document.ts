@@ -8,7 +8,10 @@ export class YjsDocument {
     public readonly updatedAt: Date,
   ) {}
 
-  static create(props: { cardsetId: number; documentData: Buffer }): YjsDocument {
+  static create(props: {
+    cardsetId: number;
+    documentData: Buffer;
+  }): YjsDocument {
     return new YjsDocument(
       0,
       props.cardsetId,

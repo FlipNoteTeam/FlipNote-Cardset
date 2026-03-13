@@ -34,7 +34,9 @@ export class CardController {
     @Headers('X-USER-ID') _userId: string,
     @Param('cardsetId') cardsetId: string,
   ): Promise<ApiResponse<CardResponse[]>> {
-    const cards = await this.cardUseCase.findAllByCardsetId(parseInt(cardsetId));
+    const cards = await this.cardUseCase.findAllByCardsetId(
+      parseInt(cardsetId),
+    );
     return ApiResponse.success(cards.map((c) => CardResponse.from(c)));
   }
 

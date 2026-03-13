@@ -150,7 +150,10 @@ export class CardsetUseCase {
     return this.groupGrpcClient.isUserInGroup(cardset.groupId, userId);
   }
 
-  async getCardSetsByIds(cardSetIds: number[], userId: number): Promise<Cardset[]> {
+  async getCardSetsByIds(
+    cardSetIds: number[],
+    userId: number,
+  ): Promise<Cardset[]> {
     const cardsets = await this.cardsetRepository.findByIds(cardSetIds);
     const viewable: Cardset[] = [];
     for (const cardset of cardsets) {

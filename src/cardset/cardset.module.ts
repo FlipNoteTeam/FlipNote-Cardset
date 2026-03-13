@@ -38,7 +38,10 @@ import { GrpcClientModule } from '../shared/grpc/grpc-client.module';
   providers: [
     { provide: CARDSET_REPOSITORY, useClass: CardsetRepositoryImpl },
     { provide: CARD_REPOSITORY, useClass: CardRepositoryImpl },
-    { provide: CARDSET_MANAGER_REPOSITORY, useClass: CardsetManagerRepositoryImpl },
+    {
+      provide: CARDSET_MANAGER_REPOSITORY,
+      useClass: CardsetManagerRepositoryImpl,
+    },
     CardsetCardDomainService,
     GroupGrpcClient,
     ImageGrpcClient,

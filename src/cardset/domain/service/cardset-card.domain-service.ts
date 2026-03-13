@@ -7,7 +7,11 @@ import { Card } from '../model/card';
  */
 @Injectable()
 export class CardsetCardDomainService {
-  buildCardsToAdd(cardsetId: number, currentCount: number, targetCount: number): Card[] {
+  buildCardsToAdd(
+    cardsetId: number,
+    currentCount: number,
+    targetCount: number,
+  ): Card[] {
     const cards: Card[] = [];
     for (let i = currentCount; i < targetCount; i++) {
       cards.push(Card.create({ content: '', order: i, cardsetId }));

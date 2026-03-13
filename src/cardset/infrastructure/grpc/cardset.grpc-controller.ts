@@ -13,14 +13,24 @@ export class CardsetGrpcController {
   constructor(private readonly cardsetUseCase: CardsetUseCase) {}
 
   @GrpcMethod('CardsetService', 'IsCardSetViewable')
-  async isCardSetViewable(data: IsCardSetViewableRequest): Promise<IsCardSetViewableResponse> {
-    const viewable = await this.cardsetUseCase.isCardSetViewable(data.cardSetId, data.userId);
+  async isCardSetViewable(
+    data: IsCardSetViewableRequest,
+  ): Promise<IsCardSetViewableResponse> {
+    const viewable = await this.cardsetUseCase.isCardSetViewable(
+      data.cardSetId,
+      data.userId,
+    );
     return { viewable };
   }
 
   @GrpcMethod('CardsetService', 'GetCardSetsByIds')
-  async getCardSetsByIds(data: GetCardSetsByIdsRequest): Promise<GetCardSetsByIdsResponse> {
-    const cardsets = await this.cardsetUseCase.getCardSetsByIds(data.cardSetIds, data.userId);
+  async getCardSetsByIds(
+    data: GetCardSetsByIdsRequest,
+  ): Promise<GetCardSetsByIdsResponse> {
+    const cardsets = await this.cardsetUseCase.getCardSetsByIds(
+      data.cardSetIds,
+      data.userId,
+    );
     return {
       cardSets: cardsets.map((c) => ({
         id: c.id,

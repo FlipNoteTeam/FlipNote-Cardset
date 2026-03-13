@@ -31,10 +31,14 @@ interface ImageCommandService {
 export class ImageGrpcClient implements OnModuleInit {
   private imageService: ImageCommandService;
 
-  constructor(@Inject('IMAGE_GRPC_CLIENT') private readonly client: ClientGrpc) {}
+  constructor(
+    @Inject('IMAGE_GRPC_CLIENT') private readonly client: ClientGrpc,
+  ) {}
 
   onModuleInit() {
-    this.imageService = this.client.getService<ImageCommandService>('ImageCommandService');
+    this.imageService = this.client.getService<ImageCommandService>(
+      'ImageCommandService',
+    );
   }
 
   async getImageUrl(cardSetId: number): Promise<string> {
@@ -47,7 +51,7 @@ export class ImageGrpcClient implements OnModuleInit {
       );
       return result.imageUrl;
     } catch {
-      throw new BusinessException(ErrorCode.IMAGE_SERVICE_ERROR as ErrorCode);
+      throw new BusinessException(ErrorCode.IMAGE_SERVICE_ERROR);
     }
   }
 
@@ -61,7 +65,7 @@ export class ImageGrpcClient implements OnModuleInit {
         }),
       );
     } catch {
-      throw new BusinessException(ErrorCode.IMAGE_SERVICE_ERROR as ErrorCode);
+      throw new BusinessException(ErrorCode.IMAGE_SERVICE_ERROR);
     }
   }
 
@@ -75,7 +79,7 @@ export class ImageGrpcClient implements OnModuleInit {
         }),
       );
     } catch {
-      throw new BusinessException(ErrorCode.IMAGE_SERVICE_ERROR as ErrorCode);
+      throw new BusinessException(ErrorCode.IMAGE_SERVICE_ERROR);
     }
   }
 }

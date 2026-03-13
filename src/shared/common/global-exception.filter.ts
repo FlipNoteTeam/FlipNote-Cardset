@@ -3,7 +3,6 @@ import {
   Catch,
   ArgumentsHost,
   HttpException,
-  HttpStatus,
   Logger,
 } from '@nestjs/common';
 import { Response } from 'express';
@@ -20,7 +19,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
     if (exception instanceof BusinessException) {
       const { status, code, message } = exception.errorCode;
-      return response.status(status).json({ status, code, message, data: null });
+      return response
+        .status(status)
+        .json({ status, code, message, data: null });
     }
 
     if (exception instanceof HttpException) {

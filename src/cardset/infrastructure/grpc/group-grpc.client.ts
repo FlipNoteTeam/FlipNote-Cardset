@@ -15,10 +15,14 @@ interface GroupCommandService {
 export class GroupGrpcClient implements OnModuleInit {
   private groupService: GroupCommandService;
 
-  constructor(@Inject('GROUP_GRPC_CLIENT') private readonly client: ClientGrpc) {}
+  constructor(
+    @Inject('GROUP_GRPC_CLIENT') private readonly client: ClientGrpc,
+  ) {}
 
   onModuleInit() {
-    this.groupService = this.client.getService<GroupCommandService>('GroupCommandService');
+    this.groupService = this.client.getService<GroupCommandService>(
+      'GroupCommandService',
+    );
   }
 
   async checkUserInGroup(groupId: number, userId: number): Promise<void> {

@@ -23,11 +23,13 @@ export class CardRepositoryImpl implements ICardRepository {
       where: { cardsetId },
       order: { order: 'ASC' },
     });
-    return orms.map(CardMapper.toDomain);
+    return orms.map((orm) => CardMapper.toDomain(orm));
   }
 
   async save(card: Card, manager?: EntityManager): Promise<Card> {
-    const repo = manager ? manager.getRepository(CardOrmEntity) : this.ormRepository;
+    const repo = manager
+      ? manager.getRepository(CardOrmEntity)
+      : this.ormRepository;
     const ormData = CardMapper.toOrm(card);
     const created = repo.create(ormData);
     const saved = await repo.save(created);
@@ -40,12 +42,20 @@ export class CardRepositoryImpl implements ICardRepository {
   }
 
   async delete(id: number, manager?: EntityManager): Promise<void> {
-    const repo = manager ? manager.getRepository(CardOrmEntity) : this.ormRepository;
+    const repo = manager
+      ? manager.getRepository(CardOrmEntity)
+      : this.ormRepository;
     await repo.delete(id);
   }
 
-  async updateOrder(cardId: number, order: number, manager?: EntityManager): Promise<void> {
-    const repo = manager ? manager.getRepository(CardOrmEntity) : this.ormRepository;
+  async updateOrder(
+    cardId: number,
+    order: number,
+    manager?: EntityManager,
+  ): Promise<void> {
+    const repo = manager
+      ? manager.getRepository(CardOrmEntity)
+      : this.ormRepository;
     await repo.update(cardId, { order });
   }
 }

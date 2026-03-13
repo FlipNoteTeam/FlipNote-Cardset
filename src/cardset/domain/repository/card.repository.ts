@@ -9,5 +9,9 @@ export interface ICardRepository {
   save(card: Card, manager?: EntityManager): Promise<Card>;
   update(id: number, card: Partial<Card>): Promise<Card | null>;
   delete(id: number, manager?: EntityManager): Promise<void>;
-  updateOrder(cardId: number, order: number, manager?: EntityManager): Promise<void>;
+  updateOrder(
+    cardId: number,
+    order: number,
+    manager?: EntityManager,
+  ): Promise<void>;
 }
