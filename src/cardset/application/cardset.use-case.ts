@@ -1,10 +1,7 @@
-import {
-  ForbiddenException,
-  Inject,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import { BusinessException } from '../../shared/common/business.exception';
+import { ErrorCode } from '../../shared/common/error-code';
 import { Cardset } from '../domain/model/cardset';
 import { CardsetManager } from '../domain/model/cardset-manager';
 import { Visibility } from '../domain/model/visibility';
@@ -43,7 +40,7 @@ export class CardsetUseCase {
         cardSetId,
       );
     if (!manager) {
-      throw new ForbiddenException('카드셋 매니저만 접근할 수 있습니다.');
+      throw new BusinessException(ErrorCode.CARDSET_MANAGER_REQUIRED);
     }
   }
 
@@ -99,7 +96,7 @@ export class CardsetUseCase {
       cardset.groupId,
       userId,
     );
-    if (!inGroup) throw new ForbiddenException('해당 그룹에 속한 유저가 아닙니다.');
+    if (!inGroup) throw new BusinessException(ErrorCode.CARDSET_ACCESS_DENIED);
     return cardset;
   }
 
@@ -109,7 +106,7 @@ export class CardsetUseCase {
     dto: UpdateCardsetRequest,
   ): Promise<Cardset | null> {
     const cardset = await this.cardsetRepository.findById(id);
-    if (!cardset) throw new NotFoundException('카드셋을 찾을 수 없습니다.');
+    if (!cardset) throw new BusinessException(ErrorCode.CARDSET_NOT_FOUND);
 
     await this.checkIsManager(id, userId);
 

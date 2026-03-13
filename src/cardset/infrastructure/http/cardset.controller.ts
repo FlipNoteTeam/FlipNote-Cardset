@@ -13,6 +13,7 @@ import { CreateCardsetRequest } from '../../application/dto/request/create-cards
 import { UpdateCardsetRequest } from '../../application/dto/request/update-cardset.request';
 import { CardsetCreateResponse } from '../../application/dto/response/cardset-create.response';
 import { CardsetResponse } from '../../application/dto/response/cardset.response';
+import { ApiResponse } from '../../../shared/common/api-response';
 
 @Controller('cardsets')
 export class CardsetController {
@@ -22,26 +23,26 @@ export class CardsetController {
   async create(
     @Headers('X-USER-ID') userId: string,
     @Body() dto: CreateCardsetRequest,
-  ): Promise<CardsetCreateResponse> {
+  ): Promise<ApiResponse<CardsetCreateResponse>> {
     const cardset = await this.cardsetUseCase.create(parseInt(userId), dto);
-    return CardsetCreateResponse.from(cardset.id);
+    return ApiResponse.created(CardsetCreateResponse.from(cardset.id));
   }
 
   @Get()
   async findAll(
     @Headers('X-USER-ID') userId: string,
-  ): Promise<CardsetResponse[]> {
+  ): Promise<ApiResponse<CardsetResponse[]>> {
     const cardsets = await this.cardsetUseCase.findAll(parseInt(userId));
-    return cardsets.map((c) => CardsetResponse.from(c));
+    return ApiResponse.success(cardsets.map((c) => CardsetResponse.from(c)));
   }
 
   @Get(':cardsetId')
   async findOne(
     @Headers('X-USER-ID') userId: string,
     @Param('cardsetId') cardsetId: string,
-  ): Promise<CardsetResponse | null> {
+  ): Promise<ApiResponse<CardsetResponse | null>> {
     const cardset = await this.cardsetUseCase.findOne(parseInt(cardsetId), parseInt(userId));
-    return cardset ? CardsetResponse.from(cardset) : null;
+    return ApiResponse.success(cardset ? CardsetResponse.from(cardset) : null);
   }
 
   @Put(':cardsetId')
@@ -49,21 +50,22 @@ export class CardsetController {
     @Headers('X-USER-ID') userId: string,
     @Param('cardsetId') cardsetId: string,
     @Body() dto: UpdateCardsetRequest,
-  ): Promise<CardsetResponse | null> {
+  ): Promise<ApiResponse<CardsetResponse | null>> {
     const cardset = await this.cardsetUseCase.update(
       parseInt(cardsetId),
       parseInt(userId),
       dto,
     );
-    return cardset ? CardsetResponse.from(cardset) : null;
+    return ApiResponse.success(cardset ? CardsetResponse.from(cardset) : null);
   }
 
   @Delete(':cardsetId')
   async remove(
     @Headers('X-USER-ID') userId: string,
     @Param('cardsetId') cardsetId: string,
-  ): Promise<void> {
-    return this.cardsetUseCase.remove(parseInt(cardsetId), parseInt(userId));
+  ): Promise<ApiResponse<null>> {
+    await this.cardsetUseCase.remove(parseInt(cardsetId), parseInt(userId));
+    return ApiResponse.success(null, '삭제되었습니다.');
   }
 
   @Put(':cardsetId/card-count')
@@ -71,12 +73,12 @@ export class CardsetController {
     @Headers('X-USER-ID') userId: string,
     @Param('cardsetId') cardsetId: string,
     @Body() body: { cardCount: number },
-  ): Promise<CardsetResponse | null> {
+  ): Promise<ApiResponse<CardsetResponse | null>> {
     const cardset = await this.cardsetUseCase.updateCardCount(
       parseInt(cardsetId),
       parseInt(userId),
       body.cardCount,
     );
-    return cardset ? CardsetResponse.from(cardset) : null;
+    return ApiResponse.success(cardset ? CardsetResponse.from(cardset) : null);
   }
 }
