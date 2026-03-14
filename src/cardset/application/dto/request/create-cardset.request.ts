@@ -17,8 +17,8 @@ export class CreateCardsetRequest {
   @ApiPropertyOptional({ example: '#영어#단어' })
   hashtag?: string | null;
 
-  @ApiProperty({ example: 1001 })
-  imageRefId!: number;
+  @ApiPropertyOptional({ example: 1001 })
+  imageRefId?: number | null;
 
   @ApiPropertyOptional({ example: 10 })
   cardCount?: number;

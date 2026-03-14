@@ -32,8 +32,8 @@ export class CollaborationUseCase {
       this.logger.log(`Created new Yjs document for cardset ${cardsetId}`);
     }
 
-    doc.on('update', async () => {
-      await this.persistDocument(cardsetId, doc);
+    doc.on('update', () => {
+      void this.persistDocument(cardsetId, doc);
     });
 
     this.documentCache.set(cardsetId, doc);
@@ -51,7 +51,17 @@ export class CollaborationUseCase {
     return Y.encodeStateAsUpdate(doc);
   }
 
-  async syncCardsFromDB(cardsetId: number, cards: any[]): Promise<void> {
+  async syncCardsFromDB(
+    cardsetId: number,
+    cards: {
+      id: number;
+      content: string;
+      order: number;
+      cardsetId: number;
+      createdAt: { toISOString(): string } | null;
+      updatedAt: { toISOString(): string } | null;
+    }[],
+  ): Promise<void> {
     const doc = await this.getOrCreateDocument(cardsetId);
     const cardsArray = doc.getArray('cards');
 
@@ -67,7 +77,9 @@ export class CollaborationUseCase {
     }));
 
     cardsArray.insert(0, yjsCards);
-    this.logger.log(`Synced ${cards.length} cards to Yjs for cardset ${cardsetId}`);
+    this.logger.log(
+      `Synced ${cards.length} cards to Yjs for cardset ${cardsetId}`,
+    );
   }
 
   async deleteDocument(cardsetId: number): Promise<void> {
@@ -79,7 +91,8 @@ export class CollaborationUseCase {
   private async persistDocument(cardsetId: number, doc: Y.Doc): Promise<void> {
     try {
       const state = Y.encodeStateAsUpdate(doc);
-      const stored = await this.yjsDocumentRepository.findByCardsetId(cardsetId);
+      const stored =
+        await this.yjsDocumentRepository.findByCardsetId(cardsetId);
 
       if (stored) {
         const updated = stored.withNewData(Buffer.from(state));
@@ -92,7 +105,10 @@ export class CollaborationUseCase {
         await this.yjsDocumentRepository.save(newDoc);
       }
     } catch (error) {
-      this.logger.error(`Failed to persist Yjs document for cardset ${cardsetId}:`, error);
+      this.logger.error(
+        `Failed to persist Yjs document for cardset ${cardsetId}:`,
+        error,
+      );
     }
   }
 }

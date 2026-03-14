@@ -1,6 +1,8 @@
-import { Inject, Injectable, OnModuleInit, ForbiddenException } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import type { ClientGrpc } from '@nestjs/microservices';
 import { Observable, firstValueFrom } from 'rxjs';
+import { BusinessException } from '../../../shared/common/business.exception';
+import { ErrorCode } from '../../../shared/common/error-code';
 
 interface GroupCommandService {
   checkUserInGroup(data: {
@@ -13,10 +15,14 @@ interface GroupCommandService {
 export class GroupGrpcClient implements OnModuleInit {
   private groupService: GroupCommandService;
 
-  constructor(@Inject('GROUP_GRPC_CLIENT') private readonly client: ClientGrpc) {}
+  constructor(
+    @Inject('GROUP_GRPC_CLIENT') private readonly client: ClientGrpc,
+  ) {}
 
   onModuleInit() {
-    this.groupService = this.client.getService<GroupCommandService>('GroupCommandService');
+    this.groupService = this.client.getService<GroupCommandService>(
+      'GroupCommandService',
+    );
   }
 
   async checkUserInGroup(groupId: number, userId: number): Promise<void> {
@@ -24,7 +30,14 @@ export class GroupGrpcClient implements OnModuleInit {
       this.groupService.checkUserInGroup({ groupId, userId }),
     );
     if (!result.exists) {
-      throw new ForbiddenException('해당 그룹에 속한 유저가 아닙니다.');
+      throw new BusinessException(ErrorCode.GROUP_NOT_IN);
     }
+  }
+
+  async isUserInGroup(groupId: number, userId: number): Promise<boolean> {
+    const result = await firstValueFrom(
+      this.groupService.checkUserInGroup({ groupId, userId }),
+    );
+    return result.exists;
   }
 }

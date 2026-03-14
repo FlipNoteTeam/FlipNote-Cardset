@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { GlobalExceptionFilter } from './shared/common/global-exception.filter';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -18,30 +19,17 @@ async function bootstrap() {
     },
   });
 
-  // 정적 파일 서빙 설정 제거 (YJS 제거로 불필요)
-
-  // Socket.IO 어댑터 설정
   app.useWebSocketAdapter(new IoAdapter(app));
+  app.useGlobalFilters(new GlobalExceptionFilter());
 
-  const config = new DocumentBuilder()
+  const swaggerConfig = new DocumentBuilder()
     .setTitle('Flip Note API')
     .setDescription('API documentation')
     .setVersion('1.0.0')
     .addBearerAuth()
     .build();
-  const document = SwaggerModule.createDocument(app, config);
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api-docs', app, document);
-  // swagger 운영 환경에서 비활성화
-  // if (process.env.SWAGGER_ENABLED === 'true' || process.env.NODE_ENV !== 'production') {
-  //   const config = new DocumentBuilder()
-  //     .setTitle('Flip Note API')
-  //     .setDescription('API documentation')
-  //     .setVersion('1.0.0')
-  //     .addBearerAuth()
-  //     .build();
-  //   const document = SwaggerModule.createDocument(app, config);
-  //   SwaggerModule.setup('api-docs', app, document);
-  // }
 
   await app.startAllMicroservices();
   await app.listen(process.env.PORT ?? 3000);

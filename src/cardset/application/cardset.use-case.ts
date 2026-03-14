@@ -1,12 +1,10 @@
-import {
-  ForbiddenException,
-  Inject,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import { BusinessException } from '../../shared/common/business.exception';
+import { ErrorCode } from '../../shared/common/error-code';
 import { Cardset } from '../domain/model/cardset';
 import { CardsetManager } from '../domain/model/cardset-manager';
+import { Visibility } from '../domain/model/visibility';
 import { CARDSET_REPOSITORY } from '../domain/repository/cardset.repository';
 import type { ICardsetRepository } from '../domain/repository/cardset.repository';
 import { CARD_REPOSITORY } from '../domain/repository/card.repository';
@@ -15,6 +13,7 @@ import { CARDSET_MANAGER_REPOSITORY } from '../domain/repository/cardset-manager
 import type { ICardsetManagerRepository } from '../domain/repository/cardset-manager.repository';
 import { CardsetCardDomainService } from '../domain/service/cardset-card.domain-service';
 import { GroupGrpcClient } from '../infrastructure/grpc/group-grpc.client';
+import { ImageGrpcClient } from '../infrastructure/grpc/image-grpc.client';
 import { CreateCardsetRequest } from './dto/request/create-cardset.request';
 import { UpdateCardsetRequest } from './dto/request/update-cardset.request';
 
@@ -29,6 +28,7 @@ export class CardsetUseCase {
     private readonly cardsetManagerRepository: ICardsetManagerRepository,
     private readonly cardsetCardDomainService: CardsetCardDomainService,
     private readonly groupGrpcClient: GroupGrpcClient,
+    private readonly imageGrpcClient: ImageGrpcClient,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -42,7 +42,7 @@ export class CardsetUseCase {
         cardSetId,
       );
     if (!manager) {
-      throw new ForbiddenException('카드셋 매니저만 접근할 수 있습니다.');
+      throw new BusinessException(ErrorCode.CARDSET_MANAGER_REQUIRED);
     }
   }
 
@@ -69,16 +69,56 @@ export class CardsetUseCase {
       });
       await this.cardsetManagerRepository.save(cardsetManager, manager);
 
+      if (dto.imageRefId) {
+        await this.imageGrpcClient.activateImage(
+          dto.imageRefId,
+          savedCardset.id,
+        );
+      }
+
       return savedCardset;
     });
   }
 
-  async findAll(): Promise<Cardset[]> {
-    return this.cardsetRepository.findAll();
+  private readonly defaultImageUrl =
+    process.env.DEFAULT_CARDSET_IMAGE_URL ?? '';
+
+  async findAll(
+    userId: number,
+  ): Promise<{ cardset: Cardset; imageUrl: string }[]> {
+    const cardsets = await this.cardsetRepository.findAll();
+    const result: { cardset: Cardset; imageUrl: string }[] = [];
+    for (const cardset of cardsets) {
+      const canView =
+        cardset.visibility === Visibility.PUBLIC ||
+        (await this.groupGrpcClient.isUserInGroup(cardset.groupId, userId));
+      if (!canView) continue;
+      const imageUrl = cardset.imageRefId
+        ? await this.imageGrpcClient.getImageUrl(cardset.id)
+        : this.defaultImageUrl;
+      result.push({ cardset, imageUrl });
+    }
+    return result;
   }
 
-  async findOne(id: number): Promise<Cardset | null> {
-    return this.cardsetRepository.findById(id);
+  async findOne(
+    id: number,
+    userId: number,
+  ): Promise<{ cardset: Cardset; imageUrl: string } | null> {
+    const cardset = await this.cardsetRepository.findById(id);
+    if (!cardset) return null;
+    if (cardset.visibility !== Visibility.PUBLIC) {
+      const inGroup = await this.groupGrpcClient.isUserInGroup(
+        cardset.groupId,
+        userId,
+      );
+      if (!inGroup)
+        throw new BusinessException(ErrorCode.CARDSET_ACCESS_DENIED);
+    }
+    const imageUrl = cardset.imageRefId
+      ? await this.imageGrpcClient.getImageUrl(cardset.id)
+      : this.defaultImageUrl;
+    return { cardset, imageUrl };
   }
 
   async update(
@@ -87,9 +127,13 @@ export class CardsetUseCase {
     dto: UpdateCardsetRequest,
   ): Promise<Cardset | null> {
     const cardset = await this.cardsetRepository.findById(id);
-    if (!cardset) throw new NotFoundException('카드셋을 찾을 수 없습니다.');
+    if (!cardset) throw new BusinessException(ErrorCode.CARDSET_NOT_FOUND);
 
     await this.checkIsManager(id, userId);
+
+    if (dto.imageRefId !== undefined) {
+      await this.imageGrpcClient.changeImage(dto.imageRefId, id);
+    }
 
     return this.cardsetRepository.update(id, dto);
   }
@@ -97,6 +141,33 @@ export class CardsetUseCase {
   async remove(id: number, userId: number): Promise<void> {
     await this.checkIsManager(id, userId);
     return this.cardsetRepository.delete(id);
+  }
+
+  async isCardSetViewable(cardSetId: number, userId: number): Promise<boolean> {
+    const cardset = await this.cardsetRepository.findById(cardSetId);
+    if (!cardset) return false;
+    if (cardset.visibility === Visibility.PUBLIC) return true;
+    return this.groupGrpcClient.isUserInGroup(cardset.groupId, userId);
+  }
+
+  async getCardSetsByIds(
+    cardSetIds: number[],
+    userId: number,
+  ): Promise<Cardset[]> {
+    const cardsets = await this.cardsetRepository.findByIds(cardSetIds);
+    const viewable: Cardset[] = [];
+    for (const cardset of cardsets) {
+      if (cardset.visibility === Visibility.PUBLIC) {
+        viewable.push(cardset);
+      } else {
+        const inGroup = await this.groupGrpcClient.isUserInGroup(
+          cardset.groupId,
+          userId,
+        );
+        if (inGroup) viewable.push(cardset);
+      }
+    }
+    return viewable;
   }
 
   async updateCardCount(

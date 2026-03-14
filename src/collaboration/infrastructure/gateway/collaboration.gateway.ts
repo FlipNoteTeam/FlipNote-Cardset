@@ -51,7 +51,9 @@ export class CollaborationGateway
 
       void client.join(`cardset:${cardsetId}`);
 
-      const state = await this.collaborationUseCase.getState(parseInt(cardsetId));
+      const state = await this.collaborationUseCase.getState(
+        parseInt(cardsetId),
+      );
       client.emit('sync-response', {
         cardsetId,
         update: Array.from(state),
@@ -65,7 +67,7 @@ export class CollaborationGateway
   }
 
   @SubscribeMessage('leave-cardset')
-  async handleLeaveCardset(
+  handleLeaveCardset(
     @WsUser() user: UserAuth,
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { cardsetId: string },
@@ -87,11 +89,16 @@ export class CollaborationGateway
   ) {
     try {
       const { cardsetId, update } = data;
-      this.logger.log(`Sync request from user ${user.userId} for cardset ${cardsetId}`);
+      this.logger.log(
+        `Sync request from user ${user.userId} for cardset ${cardsetId}`,
+      );
 
       let state: Uint8Array;
       if (update) {
-        state = await this.collaborationUseCase.applyUpdate(parseInt(cardsetId), update);
+        state = await this.collaborationUseCase.applyUpdate(
+          parseInt(cardsetId),
+          update,
+        );
       } else {
         state = await this.collaborationUseCase.getState(parseInt(cardsetId));
       }
@@ -119,14 +126,18 @@ export class CollaborationGateway
   ) {
     try {
       const { cardsetId } = data;
-      const state = await this.collaborationUseCase.getState(parseInt(cardsetId));
+      const state = await this.collaborationUseCase.getState(
+        parseInt(cardsetId),
+      );
 
       this.server.to(`cardset:${cardsetId}`).emit('sync-response', {
         cardsetId,
         update: Array.from(state),
       });
 
-      this.logger.log(`User ${user.userId} updated card in cardset ${cardsetId}`);
+      this.logger.log(
+        `User ${user.userId} updated card in cardset ${cardsetId}`,
+      );
     } catch (error) {
       this.logger.error('Error updating card:', error);
       client.emit('error', { message: 'Failed to update card' });
@@ -138,18 +149,25 @@ export class CollaborationGateway
     @WsUser() user: UserAuth,
     @ConnectedSocket() client: Socket,
     @MessageBody()
-    data: { cardsetId: string; cardOrders: { cardId: string; order: number }[] },
+    data: {
+      cardsetId: string;
+      cardOrders: { cardId: string; order: number }[];
+    },
   ) {
     try {
       const { cardsetId } = data;
-      const state = await this.collaborationUseCase.getState(parseInt(cardsetId));
+      const state = await this.collaborationUseCase.getState(
+        parseInt(cardsetId),
+      );
 
       this.server.to(`cardset:${cardsetId}`).emit('sync-response', {
         cardsetId,
         update: Array.from(state),
       });
 
-      this.logger.log(`User ${user.userId} reordered cards in cardset ${cardsetId}`);
+      this.logger.log(
+        `User ${user.userId} reordered cards in cardset ${cardsetId}`,
+      );
     } catch (error) {
       this.logger.error('Error reordering cards:', error);
       client.emit('error', { message: 'Failed to reorder cards' });

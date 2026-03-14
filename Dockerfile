@@ -19,6 +19,7 @@ RUN npm install --only=production
 
 COPY --from=builder /app/dist ./dist
 
-EXPOSE 3000
+EXPOSE 8085
+EXPOSE 9095
 
 CMD ["node", "dist/main.js"]

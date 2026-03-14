@@ -1,43 +1,40 @@
-name: develop-cd.yml
+name: CD
 
 on:
   push:
-    branches: [develop]
-
-env:
-  DOCKER_REPO: ${{ secrets.DOCKERHUB_USERNAME }}/flipnote-nestjs
+    branches:
+      - main
 
 jobs:
   deploy:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Extract Docker image metadata (short SHA)
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.ORG_PAT }}
+
+      - name: Extract Docker image metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.DOCKER_REPO }}
-          tags: type=sha,format=short
+          images: ghcr.io/dungbik/flipnote-cardset
 
-      - name: Build Docker image
+      - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
-          push: false
-          file: ./Dockerfile
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-      - name: Login to DockerHub
-        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-
-      - name: Push Docker image
-        run: docker push ${{ env.DOCKER_REPO }}:${{ steps.meta.outputs.version }}
-
-      - name: Deploy to EC2 (Blue/Green)
+      - name: Deploy to EC2
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.EC2_HOST }}

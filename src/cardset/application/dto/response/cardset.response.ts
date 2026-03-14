@@ -21,8 +21,11 @@ export class CardsetResponse {
   @ApiPropertyOptional({ example: '#영어#단어' })
   hashtag!: string | null;
 
-  @ApiProperty({ example: 1001 })
-  imageRefId!: number;
+  @ApiPropertyOptional({ example: 1001 })
+  imageRefId!: number | null;
+
+  @ApiProperty({ example: 'https://example.com/image.png' })
+  imageUrl!: string;
 
   @ApiProperty({ example: 10 })
   cardCount!: number;
@@ -33,7 +36,7 @@ export class CardsetResponse {
   @ApiProperty()
   updatedAt!: Date;
 
-  static from(cardset: Cardset): CardsetResponse {
+  static from(cardset: Cardset, imageUrl = ''): CardsetResponse {
     const res = new CardsetResponse();
     res.id = cardset.id;
     res.name = cardset.name;
@@ -42,6 +45,7 @@ export class CardsetResponse {
     res.category = cardset.category;
     res.hashtag = cardset.hashtag;
     res.imageRefId = cardset.imageRefId;
+    res.imageUrl = imageUrl;
     res.cardCount = cardset.cardCount;
     res.createdAt = cardset.createdAt;
     res.updatedAt = cardset.updatedAt;

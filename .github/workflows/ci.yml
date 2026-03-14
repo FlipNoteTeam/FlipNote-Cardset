@@ -10,12 +10,12 @@ name: Node CI with NestJS
 on:
   push:
     branches:
-      - "develop"
-      - "develop/**"
+      - "main"
+      - "main/**"
   pull_request:
     branches:
-      - "develop"
-      - "develop/**"
+      - "main"
+      - "main/**"
 
 jobs:
   build:

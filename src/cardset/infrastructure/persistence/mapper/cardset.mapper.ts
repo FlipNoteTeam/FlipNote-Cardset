@@ -10,7 +10,9 @@ export class CardsetMapper {
       orm.visibility,
       orm.category,
       orm.hashtag ?? null,
-      Number(orm.imageRefId),
+      orm.imageRefId != null && Number(orm.imageRefId) !== 0
+        ? Number(orm.imageRefId)
+        : null,
       orm.cardCount,
       orm.createdAt,
       orm.updatedAt,

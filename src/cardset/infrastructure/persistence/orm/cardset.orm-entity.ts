@@ -27,8 +27,8 @@ export class CardsetOrmEntity extends BaseOrmEntity {
   @Column({ type: 'varchar', nullable: true })
   hashtag?: string | null;
 
-  @Column({ name: 'image_ref_id', type: 'bigint', nullable: false })
-  imageRefId!: number;
+  @Column({ name: 'image_ref_id', type: 'bigint', nullable: true })
+  imageRefId!: number | null;
 
   @Column({ name: 'card_count', type: 'int', default: 10 })
   cardCount!: number;
