@@ -19,6 +19,7 @@ async function bootstrap() {
     },
   });
 
+  app.setGlobalPrefix('v1');
   app.useWebSocketAdapter(new IoAdapter(app));
   app.useGlobalFilters(new GlobalExceptionFilter());
 
