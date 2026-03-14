@@ -67,13 +67,13 @@ export class CollaborationGateway
   }
 
   @SubscribeMessage('leave-cardset')
-  handleLeaveCardset(
+  async handleLeaveCardset(
     @WsUser() user: UserAuth,
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { cardsetId: string },
   ) {
     try {
-      void client.leave(`cardset:${data.cardsetId}`);
+      await client.leave(`cardset:${data.cardsetId}`);
       this.logger.log(`User ${user.userId} left cardset ${data.cardsetId}`);
     } catch (error) {
       this.logger.error('Error leaving cardset:', error);

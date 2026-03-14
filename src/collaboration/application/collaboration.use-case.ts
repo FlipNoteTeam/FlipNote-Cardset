@@ -8,6 +8,7 @@ import { YjsDocument } from '../domain/model/yjs-document';
 export class CollaborationUseCase {
   private readonly logger = new Logger(CollaborationUseCase.name);
   private documentCache = new Map<number, Y.Doc>();
+  private persistDebounceMap = new Map<number, NodeJS.Timeout>();
 
   constructor(
     @Inject(YJS_DOCUMENT_REPOSITORY)
@@ -33,7 +34,15 @@ export class CollaborationUseCase {
     }
 
     doc.on('update', () => {
-      void this.persistDocument(cardsetId, doc);
+      const existing = this.persistDebounceMap.get(cardsetId);
+      if (existing) clearTimeout(existing);
+      this.persistDebounceMap.set(
+        cardsetId,
+        setTimeout(() => {
+          void this.persistDocument(cardsetId, doc);
+          this.persistDebounceMap.delete(cardsetId);
+        }, 500),
+      );
     });
 
     this.documentCache.set(cardsetId, doc);

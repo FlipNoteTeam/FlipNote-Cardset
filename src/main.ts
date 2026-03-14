@@ -15,7 +15,7 @@ async function bootstrap() {
     options: {
       package: 'cardset',
       protoPath: join(__dirname, 'proto/cardset.proto'),
-      url: `0.0.0.0:${process.env.GRPC_PORT ?? 5000}`,
+      url: `0.0.0.0:${process.env.GRPC_PORT ?? 9095}`,
     },
   });
 
@@ -32,6 +32,6 @@ async function bootstrap() {
   SwaggerModule.setup('api-docs', app, document);
 
   await app.startAllMicroservices();
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 8085);
 }
 void bootstrap();

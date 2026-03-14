@@ -14,6 +14,12 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(GlobalExceptionFilter.name);
 
   catch(exception: unknown, host: ArgumentsHost) {
+    const contextType = host.getType();
+    if (contextType === 'ws' || contextType === 'rpc') {
+      this.logger.error(exception);
+      throw exception;
+    }
+
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
 

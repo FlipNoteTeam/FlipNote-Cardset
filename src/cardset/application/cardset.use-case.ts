@@ -131,11 +131,13 @@ export class CardsetUseCase {
 
     await this.checkIsManager(id, userId);
 
-    if (dto.imageRefId !== undefined) {
-      await this.imageGrpcClient.changeImage(dto.imageRefId, id);
-    }
+    return this.dataSource.transaction(async () => {
+      if (dto.imageRefId !== undefined) {
+        await this.imageGrpcClient.changeImage(dto.imageRefId, id);
+      }
 
-    return this.cardsetRepository.update(id, dto);
+      return this.cardsetRepository.update(id, dto);
+    });
   }
 
   async remove(id: number, userId: number): Promise<void> {
