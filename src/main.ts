@@ -19,7 +19,7 @@ async function bootstrap() {
     },
   });
 
-  app.setGlobalPrefix('v1');
+  app.setGlobalPrefix('v1', { exclude: ['health'] });
   app.useWebSocketAdapter(new IoAdapter(app));
   app.useGlobalFilters(new GlobalExceptionFilter());
 
