@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AppController } from './app.controller';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
@@ -11,6 +12,7 @@ import { CardsetManagerOrmEntity } from './cardset/infrastructure/persistence/or
 import { YjsDocumentOrmEntity } from './collaboration/infrastructure/persistence/orm/yjs-document.orm-entity';
 
 @Module({
+  controllers: [AppController],
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRoot({
