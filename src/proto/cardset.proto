@@ -8,8 +8,8 @@ service CardsetService {
 }
 
 message IsCardSetViewableRequest {
-  int32 card_set_id = 1;
-  int32 user_id = 2;
+  int64 card_set_id = 1;
+  int64 user_id = 2;
 }
 
 message IsCardSetViewableResponse {
@@ -17,19 +17,19 @@ message IsCardSetViewableResponse {
 }
 
 message GetCardSetsByIdsRequest {
-  repeated int32 card_set_ids = 1;
-  int32 user_id = 2;
+  repeated int64 card_set_ids = 1;
+  int64 user_id = 2;
 }
 
 message CardSetSummary {
-  int32 id = 1;
+  int64 id = 1;
   string name = 2;
-  int32 group_id = 3;
+  int64 group_id = 3;
   string visibility = 4;
   string category = 5;
   string hashtag = 6;
   optional int64 image_ref_id = 7;
-  int32 card_count = 8;
+  int64 card_count = 8;
 }
 
 message GetCardSetsByIdsResponse {
